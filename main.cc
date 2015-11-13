@@ -72,7 +72,7 @@ void promptHostForMeetingSchedule(int& year, int& month, int& day, int& hour, in
 void responseFromUser(int& year, int& month, int& day, int& hour, int& minute, int& second, unsigned int& durationTime) {
 
 	cout << endl << endl;
-        cout << "Enter the suggested Meeting time:" << endl << endl;
+        cout << "What is the latest possible date that this meeting can be scheduled? " << endl << endl;
 
         cout << "Enter year: ";
         cin >> year;
@@ -115,7 +115,7 @@ void initMeetingAttributes(int& year, int& month, int& day, int& hour, int& minu
 	icaldurationtype duration;
 
 
-	const char* TZIDCanada = "America/Toronto";
+	const char* TZIDCanada = "/freeassociation.sourceforge.net/America/Toronto";
 
 	suggestedTimeByHost.year        = year;
 	suggestedTimeByHost.month       = month;
@@ -129,8 +129,7 @@ void initMeetingAttributes(int& year, int& month, int& day, int& hour, int& minu
 
 
 	/* Duration of the meeting in minutes */
-	duration.minutes = durationTime; 
-
+	duration.minutes = durationTime;
 }
 
 
