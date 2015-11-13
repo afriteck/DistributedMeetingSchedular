@@ -73,7 +73,6 @@
 # Linux trash folder which might appear on any partition or disk
 .Trash-*
 
-
 ### Windows ###
 # Windows image file caches
 Thumbs.db
@@ -124,3 +123,7 @@ Temporary Items
 
 ### MeetingScheduler ###
 agent
+
+### Vim ###
+*.swp
+*.swo
