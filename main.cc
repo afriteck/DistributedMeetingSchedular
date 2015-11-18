@@ -1,17 +1,13 @@
 #include <iostream>
-#include <stdlib.h>
-#include <string>
-
 #include <libical/ical.h>
-
-
-
 using namespace std;
 
 void   promptHostForMeetingSchedule (int&, int&, int&, int&, int&, int&, unsigned int&);
 void   initMeetingAttributes        (int&, int&, int&, int&, int&, int&, unsigned int&);
 void   responseFromUser             (int&, int&, int&, int&, int&, int&, unsigned int&);
 string sendMeetingInfoToAttendeesInANiceFormat(int&, int&, int&, int&, int&, int&, unsigned int&);
+void   promptForInvitees();
+
 
 int main() {
 
@@ -58,12 +54,16 @@ void promptHostForMeetingSchedule(int& year, int& month, int& day, int& hour, in
 		initMeetingAttributes(year, month, day, hour, minute, second, durationTime);
 
 		/* Call this function here and send this info using this string parameter over the network to each attendee*/
-		string meetingInfo = sendMeetingInfoToAttendeesInANiceFormat(year, month, day, hour, minute, second, durationTime);		
-		cout << meetingInfo;
+		string meetingInfo = sendMeetingInfoToAttendeesInANiceFormat(year, month, day, hour, minute, second, durationTime);
+
+		/* Prompt for how many invitees to schedule meeting with */
+		promptForInvitees();
+
+		cout << meetingInfo; // NOTE: Will be taken out when piecing the code together just to see the format we are sending over for now!!!!
 
 	}
 
-	exit(0);	
+	exit(0);
 
 }
 
@@ -110,7 +110,7 @@ void initMeetingAttributes(int& year, int& month, int& day, int& hour, int& minu
 
 	/* Make a variable to init all my attrib */
 	icaltimetype suggestedTimeByHost;
-	
+
 	/* Make a variable to init duration time attribute */
 	icaldurationtype duration;
 
@@ -154,10 +154,46 @@ string sendMeetingInfoToAttendeesInANiceFormat(int& year, int& month, int& day, 
 	string sDur   = "Scheduled Duration Time: " + to_string(durationTime);
 	sDur          += '\n';
 
-	
+
 	/* This should be the string to send to attendees over the network */
-	string deployStringToAttendee = intro + sYears + sMonth + sDay + sHour + sMin + sSec + sDur; 
+	string deployStringToAttendee = intro + sYears + sMonth + sDay + sHour + sMin + sSec + sDur;
 
 	return deployStringToAttendee;
+
+}
+
+
+
+/* Prompt the user to know how many invitees to intvite to the meeting */
+void promptForInvitees() {
+
+	int 	numberOfInvitees;
+	string 	inviteesIPAddress;
+
+	cout << endl << endl;
+	cout << "Enter number of invitees: ";
+	cin >> numberOfInvitees;
+	cout << endl;
+
+	int 	inviteeCounter = 1;
+	string 	inviteesArray[numberOfInvitees];
+
+	for(int i = 0; i < numberOfInvitees; i++) {
+		cout << "Enter invitee " << inviteeCounter++ << " IP address: ";
+		cin >> inviteesIPAddress;
+		cout << endl;
+
+		inviteesArray[i] = inviteesIPAddress;
+	}
+
+
+	cout << "List of invitees IP Addresses: " << endl;
+
+	/* Loop through this array get the string at each index and parse it as a network address and send over the network */
+	for (int i = 0; i < sizeof(inviteesArray)/sizeof(inviteesArray[0]); i++) {
+		cout << inviteesArray[i] << endl;
+	}
+
+	cout << endl << endl;
 
 }
