@@ -1,12 +1,5 @@
 #include <iostream>
-#include <stdlib.h>
-#include <string.h>
-#include <array>
-
 #include <libical/ical.h>
-
-
-
 using namespace std;
 
 void   promptHostForMeetingSchedule (int&, int&, int&, int&, int&, int&, unsigned int&);
@@ -65,12 +58,12 @@ void promptHostForMeetingSchedule(int& year, int& month, int& day, int& hour, in
 
 		/* Prompt for how many invitees to schedule meeting with */
 		promptForInvitees();
-		
+
 		cout << meetingInfo; // NOTE: Will be taken out when piecing the code together just to see the format we are sending over for now!!!!
 
 	}
 
-	exit(0);	
+	exit(0);
 
 }
 
@@ -117,7 +110,7 @@ void initMeetingAttributes(int& year, int& month, int& day, int& hour, int& minu
 
 	/* Make a variable to init all my attrib */
 	icaltimetype suggestedTimeByHost;
-	
+
 	/* Make a variable to init duration time attribute */
 	icaldurationtype duration;
 
@@ -161,9 +154,9 @@ string sendMeetingInfoToAttendeesInANiceFormat(int& year, int& month, int& day, 
 	string sDur   = "Scheduled Duration Time: " + to_string(durationTime);
 	sDur          += '\n';
 
-	
+
 	/* This should be the string to send to attendees over the network */
-	string deployStringToAttendee = intro + sYears + sMonth + sDay + sHour + sMin + sSec + sDur; 
+	string deployStringToAttendee = intro + sYears + sMonth + sDay + sHour + sMin + sSec + sDur;
 
 	return deployStringToAttendee;
 
