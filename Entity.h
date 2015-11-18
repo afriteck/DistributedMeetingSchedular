@@ -26,7 +26,7 @@ public:
 	float priority; //priority of the meeting btw 0 - 1
 	std::unordered_set<icalperiodtype*>  possible_times; /* possible starting times on the calendar for the meeting */
 	icaltimetype* deadline; //deadline of the meeting
-	
+
 	/* Constructor for meeting */
 	/* parameters are : meetingID
 						topic
@@ -37,6 +37,7 @@ public:
 						possible_times
 						deadline
 	*/
+	Meeting();
 	Meeting(int, std::string, std::unordered_set<Person*>, Person*, icaldurationtype*, float, std::unordered_set<icalperiodtype*>, icaltimetype*);
 	~Meeting();
 
@@ -48,5 +49,5 @@ struct Message{
 	std::unordered_set<icalperiodtype*> response; //time intervals available for an attendee
 };
 typedef struct Message Message;
-	
+
 #endif

@@ -10,8 +10,9 @@ Person::Person(Person& p){
 Person::~Person(){}
 
 
-Meeting::Meeting(int id, std::string tp, std::unordered_set<Person*> att, Person* h, icaldurationtype* dur, float pr, std::unordered_set<icalperiodtype*> pt, icaltimetype* dl){
+Meeting::Meeting() {}
 
+Meeting::Meeting(int id, std::string tp, std::unordered_set<Person*> att, Person* h, icaldurationtype* dur, float pr, std::unordered_set<icalperiodtype*> pt, icaltimetype* dl){
 	meetingID = id;
 	topic = tp;
 	attendees = att;
