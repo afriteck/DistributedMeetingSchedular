@@ -11,7 +11,12 @@ string  sendMeetingInfoToAttendeesInANiceFormat(int&, int&, int&, int&, int&, in
 void    promptForInvitees();
 void    askHostForMeetingInfo(Meeting* m);
 
-int main() {
+int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    cout << "usage: ./agent [path-to-ics-file]";
+    return -1;
+  }
+
   cout << "==== Distributed Meeting Scheduler ====" << endl;
   cout << "1. Schedule a meeting" << endl;
   cout << "2. Exit" << endl;
@@ -29,7 +34,7 @@ int main() {
   askHostForMeetingInfo(meeting);
   promptForInvitees();
 
-  const char *path = "test-data/spanlist.ics";
+  const char *path = argv[1];
   icalset *fileset = icalfileset_new(path);
   if (fileset == NULL) {
     cout << "Can't create icalfileset" << endl;
