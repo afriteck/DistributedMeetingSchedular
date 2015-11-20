@@ -6,7 +6,7 @@ LDLIBS = -lical -licalss -licalvcal -lical_cxx -licalss_cxx
 SRCS = main.cpp Entity.cpp Agent.cpp TimeSlotFinder.cpp networking.cpp CompareTimeSets.cpp Meeting.cpp
 OBJS = $(SRCS:.cpp=.o)
 
-.PHONY: depend clean extreme
+.PHONY: clean debug depend extreme
 
 all: $(EXECUTABLE)
 
@@ -18,6 +18,10 @@ $(EXECUTABLE): $(OBJS)
 
 clean:
 	$(RM) *.o $(EXECUTABLE)
+
+debug: 	CXXFLAGS += -g
+debug:  clean
+debug:	all
 
 depend: $(SRCS)
 	makedepend $(INCLUDES) $^

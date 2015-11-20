@@ -127,3 +127,6 @@ agent
 ### Vim ###
 *.swp
 *.swo
+
+### Miscellaneous ###
+*.bak
