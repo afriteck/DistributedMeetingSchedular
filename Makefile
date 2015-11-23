@@ -3,7 +3,7 @@ CXXFLAGS = -std=c++11
 EXECUTABLE = agent
 LDFLAGS = -Wl,-rpath /usr/local/lib/$(ARCH) -Llibical/build/lib
 LDLIBS = -lical -licalss -licalvcal -lical_cxx -licalss_cxx
-SRCS = main.cpp Entity.cpp Agent.cpp TimeSlotFinder.cpp networking.cpp
+SRCS = main.cpp Entity.cpp Agent.cpp TimeSlotFinder.cpp networking.cpp CompareTimeSets.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 .PHONY: depend clean extreme
@@ -32,7 +32,8 @@ extreme: all
 
 # DO NOT DELETE
 
-main.o: Agent.h Entity.h TimeSlotFinder.h
+main.o: Agent.h Entity.h TimeSlotFinder.h CompareTimeSets.h
 Entity.o: Entity.h
 Agent.o: Agent.h Entity.h
 TimeSlotFinder.o: TimeSlotFinder.h Entity.h
+CompareTimeSets.o: CompareTimeSets.h TimeSlotFinder.h
