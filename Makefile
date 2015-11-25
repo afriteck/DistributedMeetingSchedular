@@ -19,8 +19,8 @@ $(EXECUTABLE): $(OBJS)
 clean:
 	$(RM) *.o $(EXECUTABLE)
 
-debug: 	CXXFLAGS += -g
-debug:  clean
+debug:	CXXFLAGS += -g
+debug:	clean
 debug:	all
 
 depend: $(SRCS)

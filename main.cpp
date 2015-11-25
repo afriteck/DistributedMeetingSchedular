@@ -22,7 +22,7 @@ void listen(int port);
 int displayMainMenu();
 void doWork(int descriptor);
 void invitePeopleToMeeting(list<Person *> *people, Meeting *m);
-void findOpenTimeSlots(Meeting *m, icalset *set);
+bool findOpenTimeSlots(Meeting *m, icalset *set);
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
@@ -44,10 +44,14 @@ int main(int argc, char *argv[]) {
   while (displayMainMenu() != 2) {
     Meeting *meeting = askHostForMeetingInfo();
     list<Person *> *people = promptForInvitees();
-    findOpenTimeSlots(meeting, fileset);
-    invitePeopleToMeeting(people, meeting);
 
-      /** Checking the attendee's free times **/
+    if (findOpenTimeSlots(meeting, fileset)) {
+      invitePeopleToMeeting(people, meeting);
+    } else {
+      continue;
+    }
+
+    /** Checking the attendee's free times **/
     path = "test-data/spanlist2.ics";
     fileset = icalfileset_new(path);
     if (fileset == NULL) {
@@ -71,9 +75,6 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-  
-
-
 void invitePeopleToMeeting(list<Person *> *people, Meeting *meeting) {
   for (list<Person*>::iterator it = people->begin(); it != people->end(); ++it) {
     Person *person = *it;
@@ -83,7 +84,7 @@ void invitePeopleToMeeting(list<Person *> *people, Meeting *meeting) {
   }
 }
 
-void findOpenTimeSlots(Meeting *meeting, icalset *set) {
+bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
   cout << "Suggested times for meeting with deadline "
@@ -93,7 +94,15 @@ cout <<*meeting<<endl;
   /* Check if the deadline for the meeting is backwards or doesn't exist */
   int deadlineCheck = icaltime_compare(*meeting->deadline, icaltime_today());
 
-  if(deadlineCheck == -1 && meeting->deadline->month > 12) {
+  if (meeting->deadline->month < 1 || meeting->deadline->month > 12 ||
+      meeting->deadline->day < 1 || meeting->deadline->day > 31 ||
+      meeting->deadline->hour < 0 || meeting->deadline->hour > 23 ||
+      meeting->deadline->minute < 0 || meeting->deadline->minute > 59 ||
+      meeting->deadline->second < 0 || meeting->deadline->second > 59) {
+    cout << "Can't schedule meeting because of an invalid date" << endl;
+  }
+
+  else if (deadlineCheck == -1) {
     cout << "This meeting cannot be scheduled due to invalid date!" << endl;
   }
 
@@ -107,7 +116,9 @@ cout <<*meeting<<endl;
         ++it) {
          cout << "- " << icalperiodtype_as_ical_string(**it) << endl;
     }
+    return true;
   }
+  return false;
 }
 
 Meeting * askHostForMeetingInfo() {
