@@ -47,10 +47,25 @@ int main(int argc, char *argv[]) {
   cout << "Suggested times for meeting with deadline "
        << icaltime_as_ical_string(*meeting->deadline) << endl;
 
-  for (unordered_set<icalperiodtype *>::iterator it = meeting->possible_times.begin();
-       it != meeting->possible_times.end();
-       ++it) {
-    cout << "- " << icalperiodtype_as_ical_string(**it) << endl;
+  /* Check if the deadline for the meeting is backwards or doesn't exist */
+  int deadlineCheck = icaltime_compare(*meeting->deadline, icaltime_today());
+
+  if(deadlineCheck == -1) {
+    cout << "This meeting cannot be scheduled due to invalid date!" << endl;
+  }
+
+  else if (deadlineCheck == 0) {
+    cout << "Schdeuling same day doesn't guarantee other invitees to make the meeting, therefore it can't be scheduled" << endl;
+  }
+
+  else {
+
+    for (unordered_set<icalperiodtype *>::iterator it = meeting->possible_times.begin();
+        it != meeting->possible_times.end();
+        ++it) {
+         cout << "- " << icalperiodtype_as_ical_string(**it) << endl;
+    }
+
   }
   
   /** Checking the attendee's free times **/
