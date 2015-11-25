@@ -5,6 +5,7 @@
 
 #include "Agent.h"
 #include "TimeSlotFinder.h"
+#include "CompareTimeSets.h"
 using namespace std;
 
 string  sendMeetingInfoToAttendeesInANiceFormat(int&, int&, int&, int&, int&, int&, unsigned int&);
@@ -51,7 +52,26 @@ int main(int argc, char *argv[]) {
        ++it) {
     cout << "- " << icalperiodtype_as_ical_string(**it) << endl;
   }
+  
+  /** Checking the attendee's free times **/
+  path = "test-data/spanlist2.ics";
+  fileset = icalfileset_new(path);
+  if (fileset == NULL) {
+    cout << "Can't create icalfileset" << endl;
+    return -1;
+  }
 
+  CompareTimeSets handler;
+  unordered_set<icalperiodtype *> free_times;
+  handler.CompareSets(meeting, fileset, &free_times);
+  
+  cout << "\nFree times with deadline:"
+       << icaltime_as_ical_string(*meeting->deadline) << endl;
+  for (unordered_set<icalperiodtype *>::iterator it = free_times.begin();
+       it != free_times.end();
+       ++it) {
+    cout << "- " << icalperiodtype_as_ical_string(**it) << endl;
+  }
   return 0;
 }
 
