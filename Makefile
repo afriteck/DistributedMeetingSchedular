@@ -3,7 +3,7 @@ CXXFLAGS = -std=c++11
 EXECUTABLE = agent
 LDFLAGS = -Wl,-rpath /usr/local/lib/$(ARCH) -Llibical/build/lib
 LDLIBS = -lical -licalss -licalvcal -lical_cxx -licalss_cxx
-SRCS = main.cpp Entity.cpp Agent.cpp TimeSlotFinder.cpp
+SRCS = main.cpp Entity.cpp Agent.cpp TimeSlotFinder.cpp networking.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 .PHONY: depend clean extreme
@@ -31,6 +31,7 @@ extreme: all
 # 3. Tweak the generated dependencies as necessary
 
 # DO NOT DELETE
+
 main.o: Agent.h Entity.h TimeSlotFinder.h
 Entity.o: Entity.h
 Agent.o: Agent.h Entity.h
