@@ -1,6 +1,8 @@
 #include "Entity.h"
 
-Person::Person(std::string n, std::string ip, int port): name(n), IP_ADDRESS(ip), PORT_NUMBER(port){}
+using namespace std;
+
+Person::Person(string n, string ip, int port): name(n), IP_ADDRESS(ip), PORT_NUMBER(port){}
 
 Person::Person(Person& p){
 	this->name = p.name;
@@ -10,7 +12,9 @@ Person::Person(Person& p){
 Person::~Person(){}
 
 
-Meeting::Meeting() {}
+
+/*Meeting::Meeting() {
+}
 
 Meeting::Meeting(int id, std::string tp, std::unordered_set<Person*> att, Person* h, icaldurationtype* dur, float pr, std::unordered_set<icalperiodtype*> pt, icaltimetype* dl){
 	meetingID = id;
@@ -21,7 +25,11 @@ Meeting::Meeting(int id, std::string tp, std::unordered_set<Person*> att, Person
 	priority = pr;
 	possible_times = pt;
 	deadline = dl;
+
+       
 }
+
+
 
 Meeting::~Meeting(){
 	if(host)
@@ -30,4 +38,6 @@ Meeting::~Meeting(){
 		delete duration;
 	if(deadline)
 		delete deadline;
-}
+}*/
+
+

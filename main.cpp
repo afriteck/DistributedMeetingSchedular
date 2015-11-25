@@ -33,7 +33,17 @@ int main(int argc, char *argv[]) {
 
   Meeting *meeting = new Meeting();
   askHostForMeetingInfo(meeting);
+  stringstream ss;
+  ss << meeting; //serialize
+
+
+  
+  
   promptForInvitees();
+
+  
+
+  //write (socket, ss.str().c_str(), 20); //send - the buffer size must be adjusted
 
   const char *path = argv[1];
   icalset *fileset = icalfileset_new(path);
@@ -47,6 +57,7 @@ int main(int argc, char *argv[]) {
   cout << "Suggested times for meeting with deadline "
        << icaltime_as_ical_string(*meeting->deadline) << endl;
 
+cout <<*meeting<<endl;
   /* Check if the deadline for the meeting is backwards or doesn't exist */
   int deadlineCheck = icaltime_compare(*meeting->deadline, icaltime_today());
 
