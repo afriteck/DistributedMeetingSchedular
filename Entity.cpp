@@ -11,6 +11,10 @@ Person::Person(Person& p){
 }
 Person::~Person(){}
 
+std::ostream& operator<<(std::ostream& os, const Person& p) {
+	os << p.name << " (" << p.IP_ADDRESS << ":" << p.PORT_NUMBER << ")";
+	return os;
+}
 
 
 /*Meeting::Meeting() {
