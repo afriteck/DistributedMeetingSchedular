@@ -36,9 +36,10 @@ extreme: all
 
 # DO NOT DELETE
 
-main.o: Agent.h Entity.h TimeSlotFinder.h CompareTimeSets.h
+main.o: Agent.h Entity.h TimeSlotFinder.h CompareTimeSets.h networking.h
 Entity.o: Entity.h
 Agent.o: Agent.h Entity.h
-TimeSlotFinder.o: TimeSlotFinder.h Entity.h
-
-CompareTimeSets.o: CompareTimeSets.h TimeSlotFinder.h
+TimeSlotFinder.o: TimeSlotFinder.h Entity.h impl/icalspanlistimpl.h
+networking.o: networking.h
+CompareTimeSets.o: CompareTimeSets.h TimeSlotFinder.h Entity.h
+Meeting.o: Entity.h
