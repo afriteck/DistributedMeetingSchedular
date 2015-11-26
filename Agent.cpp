@@ -16,13 +16,13 @@ void Agent::addConnectedUsers(std::unordered_set<Person*> users){
 void Agent::ScheduleMeeting(){
 
 }
- 
-void Agent::SendMessage(Message* msg){
+
+void Agent::SendMessage(__attribute__((unused)) Message* msg){
 
 }
 
 Message* Agent::ReceiveMessage(){
-	Message* msg;
+	Message* msg = NULL;
 	//...
 	return msg;
 }

@@ -10,8 +10,6 @@
 #include <iostream>
 using namespace std;
 
-#define NETWORKING_DEBUG 0
-
 void printErrorMsg(string msg) {
   cout << "Error: " << msg << endl;
   exit(1);
@@ -80,186 +78,108 @@ void connectToServer(char *ip_address, int port, int *descriptor) {
   }
 }
 
-/* Now we can send message to the server or client back and forth
- * this function was basically made to handle commands like "ls", "mkdir" etc */
-int sendMessage(char *buff, int descriptor) {
-  if (strlen(buff) < 1) {
-    return strlen(buff);
-  }
-
-  int numBytes = strlen(buff) + 1;
-  buff[strlen(buff)] = '\0';
+int sendMessage(string& buff, int descriptor) {
+  const char *c_buff = buff.c_str();
+  uint32_t stringSize = strlen(c_buff);
 
   #if NETWORKING_DEBUG
-  printf("Sending a %d-byte message: %s\n", numBytes, buff);
+  cout << "NETWORKING: Sending string size" << endl;
   #endif
-
-  int totalBytesSent = 0;
-  while (totalBytesSent < numBytes) {
-    int result = write(descriptor, buff, numBytes);
+  int numBytesSent = 0, totalNumBytes = sizeof(stringSize);
+  while (numBytesSent < totalNumBytes) {
+    int result = send(descriptor, &stringSize, totalNumBytes - numBytesSent, 0);
     if (result < 0) {
-      printErrorMsg("write() failed\n");
-    }
-    totalBytesSent += result;
-  }
-  return totalBytesSent;
-}
-
-/* We can as well recieve message from the server or the client back and forth
- * this function was basically made to handle commands like "ls", "mkdir" etc */
-int receiveMessage(char *buff, int descriptor) {
-  bzero(buff, MAX_BUFF_LEN);
-  int numBytesRcvd = 0;
-  while (1) {
-    int result = recv(descriptor, buff, MAX_BUFF_LEN - numBytesRcvd, 0);
-    if (result == 0 || (result < 0 && errno == ECONNRESET)) {
-      printf("Connection terminated by client.\n");
+      cout << "Failed to transmit string size to socket " << descriptor << ". "
+           << "(" << strerror(errno) << ")." << endl;
       return -1;
     }
-    else if (result < 0) {
-      printErrorMsg("recv() failed\n");
-    }
-
-    printf("We just recevied %d bytes", result);
-    numBytesRcvd += result;
-    if (strchr(buff, '\0') != NULL) { // The null terminator has been read
-      break;
-    }
-  }
-
-  #if NETWORKING_DEBUG
-  printf("Received a %d-bytes message: %s\n", numBytesRcvd, buff);
-  #endif
-
-  return numBytesRcvd;
-}
-
-
-/* This function was made in respect to, if I want to receive a file,
- * either from the server or client I can use this function */
-void receiveFile(char *buff, int descriptor, char *filename) {
-  // Determine size of the incoming file
-  uint32_t fileSize;
-  int totalNumBytes = sizeof(uint32_t);
-  int numBytesRcvd = 0;
-
-  while (numBytesRcvd < totalNumBytes) {
-    int result = recv(descriptor, &fileSize, totalNumBytes - numBytesRcvd, 0);
-    if (result < 0) {
-      printErrorMsg("recv() failed for determining file size");
-    }
-
-    numBytesRcvd += result;
-  }
-
-  if (fileSize == 0) {
-    printf("File `%s` was not found.\n", filename);
-    return;
-  }
-  else {
-    printf("Incoming file with a size of %u bytes.\n", fileSize);
-  }
-
-  FILE *file = fopen(filename, "ab");
-  if (file == NULL) {
-    printErrorMsg("fopen() failed in receiveFile function");
-  }
-  printf("Created new file `%s` successfully.\n", filename);
-
-  totalNumBytes = fileSize;
-  numBytesRcvd = 0;
-  bzero(buff, MAX_BUFF_LEN);
-
-  while (numBytesRcvd < totalNumBytes) {
-    int recvResult = recv(descriptor, buff, MAX_BUFF_LEN, 0);
-    if (recvResult < 0) {
-      printErrorMsg("recv() failed");
-    }
-
-    int writeResult = fwrite(buff, sizeof(char), recvResult, file);
-    if (writeResult < recvResult) {
-      printErrorMsg("fwrite() failed to write the bytes to disk");
-    }
-
-    bzero(buff, MAX_BUFF_LEN);
-    numBytesRcvd += writeResult;
-    printf("%d out of %d bytes written to disk.\n", numBytesRcvd, totalNumBytes);
-  }
-
-  fclose(file);
-
-  if (totalNumBytes == numBytesRcvd) {
-    printf("Finished downloading %s!\n", filename);
-  }
-  else {
-    printf("It seems like something went wrong while downloading %s.\n", filename);
-  }
-}
-
-/* This function was made in respect to, if I want to send a file,
- * either from the server or client I can use this function */
-void sendFile(int descriptor, char *filename) {
-  char *buff = (char *)malloc(MAX_BUFF_LEN);
-
-  FILE *file = fopen(filename, "rb+");
-
-  // Determine the number of bytes that will be sent (i.e., file size)
-  uint32_t fileSize;
-  if (file == NULL) {
-    fileSize = 0;
-    printf("File `%s` does not exist.\n", filename);
-  } else {
-    fseek(file, 0L, SEEK_END);
-    fileSize = ftell(file);
-    rewind(file);
-    printf("Opened `%s` successfully (%u bytes).\n", filename, fileSize);
-  }
-
-  int totalNumBytes = sizeof(uint32_t);
-  int numBytesSent = 0;
-  while (numBytesSent < totalNumBytes) {
-    int result = send(descriptor, &fileSize, totalNumBytes - numBytesSent, 0);
-    if (result < 0) {
-      printErrorMsg("Failed to send the message size header");
-    }
     numBytesSent += result;
+    #if NETWORKING_DEBUG
+    cout << "NETWORKING: " << numBytesSent << " out of " << totalNumBytes
+         << " sent." << endl;
+    #endif
   }
 
-  if (fileSize == 0) {
-    free(buff);
-    return;
-  }
-
-  totalNumBytes = fileSize;
+  // Send message
+  totalNumBytes = stringSize;
   numBytesSent = 0;
 
+  #if NETWORKING_DEBUG
+  cout << "NETWORKING: Sending message of size " << stringSize << " bytes."
+       << endl;
+  #endif
+  int result = 0;
   while (numBytesSent < totalNumBytes) {
-    int numBytesRead = fread(buff, sizeof(char), MAX_BUFF_LEN, file);
-    if (numBytesRead < 0) {
-      printErrorMsg("fread() failed");
+    result = send(descriptor, c_buff + result, totalNumBytes - numBytesSent, 0);
+    if (result < 0) {
+      #if NETWORKING_DEBUG
+      cout << "Failed to send message from socket " << descriptor << ". "
+           << "(" << strerror(errno) << ")." << endl;
+      #endif
+      return -1;
     }
-
-    int result = send(descriptor, buff, numBytesRead, 0);
-    if (numBytesSent < 0) {
-      free(buff);
-      printErrorMsg("send() failed");
-    }
-
-    bzero(buff, MAX_BUFF_LEN);
     numBytesSent += result;
-    printf("%d out of %d bytes sent over the socket.\n", numBytesSent, totalNumBytes);
+    #if NETWORKING_DEBUG
+    cout << "NETWORKING: " << numBytesSent << " out of " << totalNumBytes
+         << " sent." << endl;
+    #endif
   }
 
-  if (feof(file)) {
-    printf("Reached EOF.\n");
+  return numBytesSent + sizeof(stringSize);
+}
+
+int receiveMessage(string& buff, int descriptor) {
+  uint32_t stringSize;
+  int totalNumBytes = sizeof(stringSize);
+  int numBytesRcvd = 0;
+
+  #if NETWORKING_DEBUG
+  cout << "NETWORKING: Receiving string size" << endl;
+  #endif
+  while (numBytesRcvd < totalNumBytes) {
+    int result = recv(descriptor, &stringSize, totalNumBytes - numBytesRcvd, 0);
+    if (result < 0) {
+      #if NETWORKING_DEBUG
+      cout << "Failed to receive string size from socket " << descriptor << ". "
+           << "(" << strerror(errno) << ")." << endl;
+      #endif
+    }
+
+    numBytesRcvd += result;
+    #if NETWORKING_DEBUG
+    cout << "NETWORKING: " << numBytesRcvd << " out of " << totalNumBytes
+         << " received." << endl;
+    #endif
   }
 
-  if (ferror(file)) {
-    free(buff);
-    printErrorMsg("fread() failed");
+  // receive the message
+  totalNumBytes = stringSize;
+  numBytesRcvd = 0;
+
+  #if NETWORKING_DEBUG
+  cout << "NETWORKING: Receiving message of size " << stringSize << " bytes."
+       << endl;
+  #endif
+  char *c_buff = new char[MAX_BUFF_LEN];
+  while (numBytesRcvd < totalNumBytes) {
+    bzero(c_buff, MAX_BUFF_LEN);
+    int bytesLeft = totalNumBytes - numBytesRcvd;
+    int readSize = (bytesLeft - MAX_BUFF_LEN > 0) ? MAX_BUFF_LEN : bytesLeft;
+    int result = recv(descriptor, c_buff, readSize, 0);
+    if (result < 0) {
+      #if NETWORKING_DEBUG
+      cout << "Failed to receive string size from socket " << descriptor << ". "
+           << "(" << strerror(errno) << ")." << endl;
+      #endif
+      return -1;
+    }
+    numBytesRcvd += result;
+    buff += c_buff;
+    #if NETWORKING_DEBUG
+    cout << "NETWORKING: " << numBytesRcvd << " out of " << totalNumBytes
+         << " received." << endl;
+    #endif
   }
 
-  fclose(file);
-  free(buff);
-  printf("Finished sending file.\n");
+  return numBytesRcvd + sizeof(stringSize);
 }

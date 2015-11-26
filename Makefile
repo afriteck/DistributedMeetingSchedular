@@ -26,6 +26,7 @@ debug:	all
 depend: $(SRCS)
 	makedepend $(INCLUDES) $^
 
+extreme: clean
 extreme: CXXFLAGS += -Wall -Wextra -Werror -pedantic-errors
 extreme: all
 

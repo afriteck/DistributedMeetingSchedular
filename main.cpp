@@ -13,8 +13,6 @@
 #include "Entity.h"
 using namespace std;
 
-#define NETWORK_DEBUG 0
-
 string sendMeetingInfoToAttendeesInANiceFormat(int&, int&, int&, int&, int&, int&, unsigned int&);
 list<Person *>* promptForInvitees();
 Meeting * askHostForMeetingInfo();
@@ -78,9 +76,15 @@ int main(int argc, char *argv[]) {
 void invitePeopleToMeeting(list<Person *> *people, Meeting *meeting) {
   for (list<Person*>::iterator it = people->begin(); it != people->end(); ++it) {
     Person *person = *it;
-    cout << "* Sending invitation to " << *person << endl;
+    cout << "* Sending invitation to " << *person << "...";
+    stringstream ss;
+    ss << *meeting;
+
+    string meeting_as_str = ss.str();
     int descriptor = -1;
     connectToServer(const_cast<char*>(person->IP_ADDRESS.c_str()), person->PORT_NUMBER, &descriptor);
+    sendMessage(meeting_as_str, descriptor);
+    cout << "Sent!";
   }
 }
 
@@ -89,8 +93,8 @@ bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
   finder.findAvailabilityForMeeting(meeting, set);
   cout << "Suggested times for meeting with deadline "
   << icaltime_as_ical_string(*meeting->deadline) << endl;
+  cout << *meeting <<endl;
 
-cout <<*meeting<<endl;
   /* Check if the deadline for the meeting is backwards or doesn't exist */
   int deadlineCheck = icaltime_compare(*meeting->deadline, icaltime_today());
 
@@ -221,18 +225,18 @@ void listen(int port) {
     int listenSocket = -1, acceptSocket = -1;
     setupListenSocket(port, &listenSocket);
 
-    #ifdef NETWORK_DEBUG
+    #if NETWORKING_DEBUG
     cout << "Accepting connections on port " << port << endl;
     #endif
 
     while (1) {
-      #ifdef NETWORK_DEBUG
+      #if NETWORKING_DEBUG
       cout << "Ready to accept an incoming connection!" << endl;
       #endif
 
       acceptIncomingConnection(&listenSocket, &acceptSocket);
 
-      #ifdef NETWORK_DEBUG
+      #if NETWORKING_DEBUG
       cout << "Connection accepted!" << endl;
       #endif
 
@@ -242,13 +246,12 @@ void listen(int port) {
 }
 
 void doWork(int descriptor) {
-  int i = 0;
-  while (i < 5) {
-    sleep(1);
-    #ifdef NETWORK_DEBUG
-    cout << "Work #" << i << endl;
-    #endif
-    ++i;
-  }
+  string meeting_as_str;
+  receiveMessage(meeting_as_str, descriptor);
+  #if NETWORKING_DEBUG
+  cout << "Message Start" << endl;
+  cout << meeting_as_str << flush << endl;
+  cout << "Message End" << endl;
+  #endif
   close(descriptor);
 }
