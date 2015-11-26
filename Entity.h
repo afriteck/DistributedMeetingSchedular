@@ -37,20 +37,20 @@ public:
         string topic;
         unordered_set<Person*> attendees;
         Person* host;
-        icaldurationtype* duration; 
+        icaldurationtype* duration;
         float priority;
         unordered_set<icalperiodtype*> possible_times;
         icaltimetype* deadline;
-	
+
 	Meeting();
 	Meeting(int, string, unordered_set<Person*>, Person*, icaldurationtype*, float, unordered_set<icalperiodtype*>, icaltimetype*);
 	~Meeting();
         friend ostream& operator<< (ostream& out, Meeting& obj) {
-        
+
  out << obj.meetingID << " " << obj.topic<< " "
-  <<" "<<obj.duration<< " ";
+  <<" "<< icaldurationtype_as_ical_string(*obj.duration) << " ";
   for(unordered_set<icalperiodtype*>:: iterator itr=obj.possible_times.begin();itr!=obj.possible_times.end(); ++itr) out<<icalperiodtype_as_ical_string(**itr);
-out<< " "<<icaltime_as_ical_string(*obj.deadline);   
+out<< " "<<icaltime_as_ical_string(*obj.deadline);
   //The space (" ") is necessary for separete elements
    return out;
 }
@@ -59,9 +59,9 @@ out<< " "<<icaltime_as_ical_string(*obj.deadline);
  in >> obj.meetingID >> " " >> obj.topic>> " "
   >>" ">>obj.duration>> " ";
   for(unordered_set<icalperiodtype*>:: iterator itr=obj.possible_times.begin();itr!=obj.possible_times.end(); ++itr) in>>icalperiodtype_as_ical_string(**itr);
-in>> " "<<icaltime_as_ical_string(*obj.deadline); 
+in>> " "<<icaltime_as_ical_string(*obj.deadline);
 }*/
-        
+
 
 };
 
