@@ -243,5 +243,8 @@ void doWork(int descriptor) {
   NETWORKING_LOG("Message Start");
   NETWORKING_LOG(meeting_as_str << flush);
   NETWORKING_LOG("Message End");
+  istringstream iss(meeting_as_str);
+  Meeting meeting;
+  iss >> meeting;
   close(descriptor);
 }

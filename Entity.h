@@ -34,16 +34,9 @@ public:
   Meeting();
   Meeting(int, string, unordered_set<Person*>, Person*, icaldurationtype*, float, unordered_set<icalperiodtype*>, icaltimetype*);
   ~Meeting();
+  string possible_times_as_string() const;
   friend ostream& operator<<(ostream& out, const Meeting& obj);
-
-/*friend istream& operator>> (istream& in, Meeting& obj) {
- in >> obj.meetingID >> " " >> obj.topic>> " "
-  >>" ">>obj.duration>> " ";
-  for(unordered_set<icalperiodtype*>:: iterator itr=obj.possible_times.begin();itr!=obj.possible_times.end(); ++itr) in>>icalperiodtype_as_ical_string(**itr);
-in>> " "<<icaltime_as_ical_string(*obj.deadline);
-}*/
-
-
+  friend istream& operator>>(istream& in, Meeting& obj);
 };
 
 struct Message{
