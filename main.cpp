@@ -225,20 +225,12 @@ void listen(int port) {
     int listenSocket = -1, acceptSocket = -1;
     setupListenSocket(port, &listenSocket);
 
-    #if NETWORKING_DEBUG
-    cout << "Accepting connections on port " << port << endl;
-    #endif
+    NETWORKING_LOG("Accepting connections on port " << port);
 
     while (1) {
-      #if NETWORKING_DEBUG
-      cout << "Ready to accept an incoming connection!" << endl;
-      #endif
-
+      NETWORKING_LOG("Ready to accept an incoming connection!");
       acceptIncomingConnection(&listenSocket, &acceptSocket);
-
-      #if NETWORKING_DEBUG
-      cout << "Connection accepted!" << endl;
-      #endif
+      NETWORKING_LOG("Connection accepted!");
 
       thread t1(doWork, acceptSocket);
       t1.detach();
@@ -248,10 +240,8 @@ void listen(int port) {
 void doWork(int descriptor) {
   string meeting_as_str;
   receiveMessage(meeting_as_str, descriptor);
-  #if NETWORKING_DEBUG
-  cout << "Message Start" << endl;
-  cout << meeting_as_str << flush << endl;
-  cout << "Message End" << endl;
-  #endif
+  NETWORKING_LOG("Message Start");
+  NETWORKING_LOG(meeting_as_str << flush);
+  NETWORKING_LOG("Message End");
   close(descriptor);
 }

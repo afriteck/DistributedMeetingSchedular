@@ -82,9 +82,7 @@ int sendMessage(string& buff, int descriptor) {
   const char *c_buff = buff.c_str();
   uint32_t stringSize = strlen(c_buff);
 
-  #if NETWORKING_DEBUG
-  cout << "NETWORKING: Sending string size" << endl;
-  #endif
+  NETWORKING_LOG("Sending string size");
   int numBytesSent = 0, totalNumBytes = sizeof(stringSize);
   while (numBytesSent < totalNumBytes) {
     int result = send(descriptor, &stringSize, totalNumBytes - numBytesSent, 0);
@@ -94,35 +92,24 @@ int sendMessage(string& buff, int descriptor) {
       return -1;
     }
     numBytesSent += result;
-    #if NETWORKING_DEBUG
-    cout << "NETWORKING: " << numBytesSent << " out of " << totalNumBytes
-         << " sent." << endl;
-    #endif
+    NETWORKING_LOG(numBytesSent << " out of " << totalNumBytes << " sent.");
   }
 
   // Send message
   totalNumBytes = stringSize;
   numBytesSent = 0;
 
-  #if NETWORKING_DEBUG
-  cout << "NETWORKING: Sending message of size " << stringSize << " bytes."
-       << endl;
-  #endif
+  NETWORKING_LOG("Sending message of size " << stringSize << " bytes.");
   int result = 0;
   while (numBytesSent < totalNumBytes) {
     result = send(descriptor, c_buff + result, totalNumBytes - numBytesSent, 0);
     if (result < 0) {
-      #if NETWORKING_DEBUG
       cout << "Failed to send message from socket " << descriptor << ". "
            << "(" << strerror(errno) << ")." << endl;
-      #endif
       return -1;
     }
     numBytesSent += result;
-    #if NETWORKING_DEBUG
-    cout << "NETWORKING: " << numBytesSent << " out of " << totalNumBytes
-         << " sent." << endl;
-    #endif
+    NETWORKING_LOG(numBytesSent << " out of " << totalNumBytes << " sent.");
   }
 
   return numBytesSent + sizeof(stringSize);
@@ -133,33 +120,24 @@ int receiveMessage(string& buff, int descriptor) {
   int totalNumBytes = sizeof(stringSize);
   int numBytesRcvd = 0;
 
-  #if NETWORKING_DEBUG
-  cout << "NETWORKING: Receiving string size" << endl;
-  #endif
+  NETWORKING_LOG("Receiving string size");
   while (numBytesRcvd < totalNumBytes) {
     int result = recv(descriptor, &stringSize, totalNumBytes - numBytesRcvd, 0);
     if (result < 0) {
-      #if NETWORKING_DEBUG
       cout << "Failed to receive string size from socket " << descriptor << ". "
            << "(" << strerror(errno) << ")." << endl;
-      #endif
+      return -1;
     }
 
     numBytesRcvd += result;
-    #if NETWORKING_DEBUG
-    cout << "NETWORKING: " << numBytesRcvd << " out of " << totalNumBytes
-         << " received." << endl;
-    #endif
+    NETWORKING_LOG(numBytesRcvd << " out of " << totalNumBytes << " received.");
   }
 
   // receive the message
   totalNumBytes = stringSize;
   numBytesRcvd = 0;
 
-  #if NETWORKING_DEBUG
-  cout << "NETWORKING: Receiving message of size " << stringSize << " bytes."
-       << endl;
-  #endif
+  NETWORKING_LOG("Receiving message of size " << stringSize << " bytes.");
   char *c_buff = new char[MAX_BUFF_LEN];
   while (numBytesRcvd < totalNumBytes) {
     bzero(c_buff, MAX_BUFF_LEN);
@@ -167,18 +145,13 @@ int receiveMessage(string& buff, int descriptor) {
     int readSize = (bytesLeft - MAX_BUFF_LEN > 0) ? MAX_BUFF_LEN : bytesLeft;
     int result = recv(descriptor, c_buff, readSize, 0);
     if (result < 0) {
-      #if NETWORKING_DEBUG
       cout << "Failed to receive string size from socket " << descriptor << ". "
            << "(" << strerror(errno) << ")." << endl;
-      #endif
       return -1;
     }
     numBytesRcvd += result;
     buff += c_buff;
-    #if NETWORKING_DEBUG
-    cout << "NETWORKING: " << numBytesRcvd << " out of " << totalNumBytes
-         << " received." << endl;
-    #endif
+    NETWORKING_LOG(numBytesRcvd << " out of " << totalNumBytes << " received.");
   }
 
   return numBytesRcvd + sizeof(stringSize);

@@ -2,6 +2,12 @@
 #define MAX_BUFF_LEN 1024
 #define NETWORKING_DEBUG 0
 
+#if NETWORKING_DEBUG
+#define NETWORKING_LOG(x) do { std::cout << "NETWORKING: " << x << endl; } while (0)
+#else
+#define NETWORKING_LOG(x)
+#endif
+
 #include <string>
 using namespace std;
 
