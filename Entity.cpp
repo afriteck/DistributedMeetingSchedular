@@ -11,37 +11,7 @@ Person::Person(Person& p){
 }
 Person::~Person(){}
 
-std::ostream& operator<<(std::ostream& os, const Person& p) {
+ostream& operator<<(ostream& os, const Person& p) {
 	os << p.name << " (" << p.IP_ADDRESS << ":" << p.PORT_NUMBER << ")";
 	return os;
 }
-
-
-/*Meeting::Meeting() {
-}
-
-Meeting::Meeting(int id, std::string tp, std::unordered_set<Person*> att, Person* h, icaldurationtype* dur, float pr, std::unordered_set<icalperiodtype*> pt, icaltimetype* dl){
-	meetingID = id;
-	topic = tp;
-	attendees = att;
-	host = h;
-	duration = dur;
-	priority = pr;
-	possible_times = pt;
-	deadline = dl;
-
-       
-}
-
-
-
-Meeting::~Meeting(){
-	if(host)
-		delete host;
-	if(duration)
-		delete duration;
-	if(deadline)
-		delete deadline;
-}*/
-
-
