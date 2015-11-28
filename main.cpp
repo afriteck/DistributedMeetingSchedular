@@ -56,6 +56,7 @@ int main(int argc, char *argv[]) {
 
 void invitePeopleToMeeting(list<Person *> *people, Meeting *meeting) {
   for (list<Person*>::iterator it = people->begin(); it != people->end(); ++it) {
+    meeting->option = Meeting::INVITATION;
     Person *person = *it;
     cout << "* Sending invitation to " << *person << "...";
     stringstream ss;
@@ -230,20 +231,23 @@ void doWork(int descriptor, icalset* fileset) {
   Meeting *meeting = new Meeting();
   iss >> *meeting;
 
-  CompareTimeSets handler;
-  unordered_set<icalperiodtype *> free_times;
-  handler.CompareSets(meeting, fileset, &free_times);
+  if (meeting->option == Meeting::INVITATION) {
+    CompareTimeSets handler;
+    unordered_set<icalperiodtype *> free_times;
+    handler.CompareSets(meeting, fileset, &free_times);
 
-  cout << "possibleTimes on the host side: " << endl << endl;
+    cout << "possibleTimes on the host side: " << endl << endl;
 
-  unordered_set<icalperiodtype *>::iterator it;
-  string freeTimes;
-  for (it = free_times.begin(); it != free_times.end(); ++it) {
+    unordered_set<icalperiodtype *>::iterator it;
+    string freeTimes;
+    for (it = free_times.begin(); it != free_times.end(); ++it) {
       string freeTime = icalperiodtype_as_ical_string(**it);
       cout << "- " << freeTime << endl;
       freeTimes += freeTime;
+    }
+
+    sendMessage(freeTimes, descriptor);
   }
 
-  sendMessage(freeTimes, descriptor);
   close(descriptor);
 }

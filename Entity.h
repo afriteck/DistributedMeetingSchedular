@@ -22,7 +22,12 @@ public:
 
 class Meeting{
 public:
+  enum MessageOptions: int {
+    POSSIBLE_TIMES,
+    INVITATION
+  };
   int meetingID;
+  MessageOptions option;
   string topic;
   unordered_set<Person*> attendees;
   Person* host;

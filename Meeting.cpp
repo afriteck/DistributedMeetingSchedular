@@ -43,6 +43,7 @@ unordered_set<icalperiodtype *> string_to_possible_times(string str) {
 
 ostream& operator<<(ostream& os, const Meeting& m) {
   os << m.meetingID << " ";
+  os << m.option << " ";
   os << icaldurationtype_as_ical_string(*m.duration) << " ";
   os << m.possible_times_as_string() << " ";
   os << icaltime_as_ical_string(*m.deadline);
@@ -51,6 +52,10 @@ ostream& operator<<(ostream& os, const Meeting& m) {
 
 istream& operator>>(istream &in, Meeting& obj) {
   in >> obj.meetingID;
+
+  int optionAsInt;
+  in >> optionAsInt;
+  obj.option = (Meeting::MessageOptions)optionAsInt;
 
   string durationStr;
   in >> durationStr;
