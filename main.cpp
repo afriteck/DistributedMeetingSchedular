@@ -16,9 +16,9 @@ using namespace std;
 string sendMeetingInfoToAttendeesInANiceFormat(int&, int&, int&, int&, int&, int&, unsigned int&);
 list<Person *>* promptForInvitees();
 Meeting * askHostForMeetingInfo();
-void listen(int port);
+void listen(int port, icalset* PATH);
 int displayMainMenu();
-void doWork(int descriptor);
+void doWork(int descriptor, icalset* set);
 void invitePeopleToMeeting(list<Person *> *people, Meeting *m);
 bool findOpenTimeSlots(Meeting *m, icalset *set);
 
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  thread t1(listen, atoi(argv[2]));
+  thread t1(listen, atoi(argv[2]), fileset);
   t1.detach();
 
   const char *path = argv[1];
@@ -49,26 +49,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    /** Checking the attendee's free times **/
-    path = "test-data/spanlist2.ics";
-    fileset = icalfileset_new(path);
-    if (fileset == NULL) {
-      cout << "Can't create icalfileset" << endl;
-      return -1;
-    }
-
-    CompareTimeSets handler;
-    unordered_set<icalperiodtype *> free_times;
-    handler.CompareSets(meeting, fileset, &free_times);
-
-    cout << "\nFree times with deadline:"
-    << icaltime_as_ical_string(*meeting->deadline) << endl;
-    for (unordered_set<icalperiodtype *>::iterator it = free_times.begin();
-     it != free_times.end();
-     ++it) {
-      cout << "- " << icalperiodtype_as_ical_string(**it) << endl;
-    }
-
+    cout << endl << "Free times with deadline:" << icaltime_as_ical_string(*meeting->deadline) << endl;
   }
   return 0;
 }
@@ -93,7 +74,7 @@ bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
   finder.findAvailabilityForMeeting(meeting, set);
   cout << "Suggested times for meeting with deadline "
   << icaltime_as_ical_string(*meeting->deadline) << endl;
-  cout << *meeting <<endl;
+  cout << *meeting << endl;
 
   /* Check if the deadline for the meeting is backwards or doesn't exist */
   int deadlineCheck = icaltime_compare(*meeting->deadline, icaltime_today());
@@ -221,7 +202,7 @@ int displayMainMenu() {
   return option;
 }
 
-void listen(int port) {
+void listen(int port, icalset* PATH) {
     int listenSocket = -1, acceptSocket = -1;
     setupListenSocket(port, &listenSocket);
 
@@ -232,19 +213,37 @@ void listen(int port) {
       acceptIncomingConnection(&listenSocket, &acceptSocket);
       NETWORKING_LOG("Connection accepted!");
 
-      thread t1(doWork, acceptSocket);
+      thread t1(doWork, acceptSocket, PATH);
       t1.detach();
     }
 }
 
-void doWork(int descriptor) {
+void doWork(int descriptor, icalset* fileset) {
   string meeting_as_str;
   receiveMessage(meeting_as_str, descriptor);
+
   NETWORKING_LOG("Message Start");
   NETWORKING_LOG(meeting_as_str << flush);
   NETWORKING_LOG("Message End");
+
   istringstream iss(meeting_as_str);
-  Meeting meeting;
-  iss >> meeting;
+  Meeting *meeting = new Meeting();
+  iss >> *meeting;
+
+  CompareTimeSets handler;
+  unordered_set<icalperiodtype *> free_times;
+  handler.CompareSets(meeting, fileset, &free_times);
+
+  cout << "possibleTimes on the host side: " << endl << endl;
+
+  unordered_set<icalperiodtype *>::iterator it;
+  string freeTimes;
+  for (it = free_times.begin(); it != free_times.end(); ++it) {
+      string freeTime = icalperiodtype_as_ical_string(**it);
+      cout << "- " << freeTime << endl;
+      freeTimes += freeTime;
+  }
+
+  sendMessage(freeTimes, descriptor);
   close(descriptor);
 }
