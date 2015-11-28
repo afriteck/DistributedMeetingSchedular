@@ -49,14 +49,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    cout << "\nFree times with deadline:"
-    << icaltime_as_ical_string(*meeting->deadline) << endl;
-    /*for (unordered_set<icalperiodtype *>::iterator it = free_times.begin();
-     it != free_times.end();
-     ++it) {
-      cout << "- " << icalperiodtype_as_ical_string(**it) << endl;
-    } */
-
+    cout << endl << "Free times with deadline:" << icaltime_as_ical_string(*meeting->deadline) << endl;
   }
   return 0;
 }
