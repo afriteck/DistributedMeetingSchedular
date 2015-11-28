@@ -13,6 +13,7 @@ public:
   string  name;
   string  IP_ADDRESS;
   int     PORT_NUMBER;
+  int     descriptor;
 
   Person(string name = "NULL", string ip = "NULL", int port = -1);
   Person(Person& p);
@@ -24,7 +25,9 @@ class Meeting{
 public:
   enum MessageOptions: int {
     POSSIBLE_TIMES,
-    INVITATION
+    INVITATION,
+    AWARD,
+    REJECT
   };
   int meetingID;
   MessageOptions option;
