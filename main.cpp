@@ -226,63 +226,31 @@ void listen(int port, icalset* PATH) {
 }
 
 void doWork(int descriptor, icalset* fileset) {
-
-  /* To Test see if a possible time matches it just for testing purposes replace with deserialized objects */
-  //Meeting* possibleTimesFromHost; /*= hostMeetingInfo; */
-
-  string year, month, day, hour, minute;
-
-  int durationInMinutes = 60;   
-  year = "2015";
-  month = "12";
-  day = "21";
-  hour = "12";
-  minute = "24";
-
-  stringstream ss;
-  ss << year << month << day << "T" << hour << minute << "00";
-  string iso_str = ss.str();
-
-  const char* TZID = "/freeassociation.sourceforge.net/America/Toronto";
-  icaltimezone *tz = icaltimezone_get_builtin_timezone_from_tzid(TZID);
-
-  Meeting *meeting = new Meeting();
-  meeting->duration = new icaldurationtype(icaldurationtype_from_int(durationInMinutes * 60));
-  meeting->deadline = new icaltimetype(icaltime_from_string(iso_str.c_str()));
-  icaltime_set_timezone(meeting->deadline, tz); 
-  
-  stringstream meetingStream;
-  meetingStream << *meeting;
-  string meeting_as_str;// = meetingStream.str();
-
+  string meeting_as_str;
   receiveMessage(meeting_as_str, descriptor);
+
   NETWORKING_LOG("Message Start");
   NETWORKING_LOG(meeting_as_str << flush);
   NETWORKING_LOG("Message End");
 
-  /* unserialze the object now*/
-  //stringstream ss;
+  istringstream iss(meeting_as_str);
+  Meeting *meeting = new Meeting();
+  iss >> *meeting;
 
-  /*ss << meeting_as_str;
-  ss >> *possibleTimesFromHost;*/
-
-  // Compare possible Times with host time assuming host possible time is possibeTimesFromHost which is the derserialized object
   CompareTimeSets handler;
   unordered_set<icalperiodtype *> free_times;
   handler.CompareSets(meeting, fileset, &free_times);
 
   cout << "possibleTimes on the host side: " << endl << endl;
 
-  for (unordered_set<icalperiodtype *>::iterator it = free_times.begin();
-     it != free_times.end();
-     ++it) {
-      cout << "- " << icalperiodtype_as_ical_string(**it) << endl;
-
-      string sendmessage(icalperiodtype_as_ical_string(**it));
-
-      sendMessage(sendmessage, descriptor);
+  unordered_set<icalperiodtype *>::iterator it;
+  string freeTimes;
+  for (it = free_times.begin(); it != free_times.end(); ++it) {
+      string freeTime = icalperiodtype_as_ical_string(**it);
+      cout << "- " << freeTime << endl;
+      freeTimes += freeTime;
   }
-  
 
+  sendMessage(freeTimes, descriptor);
   close(descriptor);
 }
