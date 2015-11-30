@@ -6,13 +6,16 @@
 #include <libical/ical.h>
 #include <libical/icalss.h>
 #include <unistd.h>
+#include <mutex>
 
 #include "Agent.h"
 #include "TimeSlotFinder.h"
 #include "CompareTimeSets.h"
 #include "networking.h"
-#include "Entity.h"
+#include "Meeting.h"
 using namespace std;
+
+mutex invitationResponse;
 
 string sendMeetingInfoToAttendeesInANiceFormat(int&, int&, int&, int&, int&, int&, unsigned int&);
 list<Person *>* promptForInvitees();
@@ -20,7 +23,8 @@ Meeting * askHostForMeetingInfo();
 void listen(int port, icalset* PATH);
 int displayMainMenu();
 void doWork(int descriptor, icalset* set);
-void invitePeopleToMeeting(list<Person *> *people, Meeting *m);
+void sendAllInvitations(list<Person *> *people, Meeting *m, icalset *set);
+void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v);
 bool findOpenTimeSlots(Meeting *m, icalset *set);
 
 int main(int argc, char *argv[]) {
@@ -45,7 +49,7 @@ int main(int argc, char *argv[]) {
     list<Person *> *people = promptForInvitees();
 
     if (findOpenTimeSlots(meeting, fileset)) {
-      invitePeopleToMeeting(people, meeting);
+      sendAllInvitations(people, meeting, fileset);
     } else {
       continue;
     }
@@ -55,19 +59,67 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-void invitePeopleToMeeting(list<Person *> *people, Meeting *meeting) {
-  for (list<Person*>::iterator it = people->begin(); it != people->end(); ++it) {
-    meeting->option = Meeting::INVITATION;
-    Person *person = *it;
-    cout << "* Sending invitation to " << *person << "...";
-    stringstream ss;
-    ss << *meeting;
+void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) {
+  vector<thread*> threads;
+  vector<Meeting *> *v = new vector<Meeting *>;
 
-    string meeting_as_str = ss.str();
-    int descriptor = -1;
-    connectToServer(const_cast<char*>(person->IP_ADDRESS.c_str()), person->PORT_NUMBER, &descriptor);
-    sendMessage(meeting_as_str, descriptor);
-    cout << "Sent!";
+  // Send out invitations on separate threads
+  for (list<Person*>::iterator it = people->begin(); it != people->end(); ++it) {
+    Person *person = *it;
+    thread *t = new thread(invitePersonToMeeting, person, meeting, v);
+    threads.push_back(t);
+  }
+
+  // Wait for replies
+  vector<thread *>::iterator it;
+  for (it = threads.begin(); it != threads.end(); ++it) {
+    thread *t = *it;
+    t->join();
+  }
+
+  // Find intersection of all replies
+  CompareTimeSets c;
+  vector<Meeting *>::iterator meeting_it;
+  Meeting *m = v->front();
+  unordered_set<icalperiodtype *> *free_times = &m->possible_times;
+  for (meeting_it = v->begin(); meeting_it != v->end(); ++meeting_it) {
+    c.findIntersection(free_times, &(*meeting_it)->possible_times, free_times);
+  }
+
+  // Check host calendar to see if intersecting time slot is still available
+  TimeSlotFinder finder;
+  finder.findAvailabilityForMeeting(meeting, set);
+  c.findIntersection(free_times, &meeting->possible_times, free_times);
+
+  // Send back rejections or awards
+  meeting->possible_times.clear();
+  if (!free_times->empty()) {
+    meeting->possible_times.insert(*free_times->begin());
+  }
+
+  for (list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
+    meeting->option = free_times->empty() ? Meeting::REJECT : Meeting::AWARD;
+    Person *person = *it;
+    sendMeeting(*meeting, person->descriptor);
+  }
+}
+
+void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v) {
+  cout << "* Sending invitation to " << *person << "...";
+
+  int descriptor = -1;
+  connectToServer(const_cast<char*>(person->IP_ADDRESS.c_str()), person->PORT_NUMBER, &descriptor);
+  person->descriptor = descriptor;
+  sendMeeting(*meeting, descriptor);
+
+  Meeting *responseFromAttendee = new Meeting();
+  receiveMeeting(*responseFromAttendee, descriptor);
+  invitationResponse.lock();
+  v->push_back(responseFromAttendee);
+  invitationResponse.unlock();
+
+  if (responseFromAttendee->option == Meeting::POSSIBLE_TIMES) {
+    cout << *meeting << endl;
   }
 }
 
@@ -149,6 +201,7 @@ Meeting * askHostForMeetingInfo() {
   Meeting *meeting = new Meeting();
   meeting->duration = new icaldurationtype(icaldurationtype_from_int(durationInMinutes * 60));
   meeting->deadline = new icaltimetype(icaltime_from_string(iso_str.c_str()));
+  meeting->option = Meeting::INVITATION;
   icaltime_set_timezone(meeting->deadline, tz);
   return meeting;
 }
@@ -233,6 +286,7 @@ void listen(int port, icalset* PATH) {
 }
 
 void doWork(int descriptor, icalset* fileset) {
+<<<<<<< HEAD
   string meeting_as_str;
   receiveMessage(meeting_as_str, descriptor);
 
@@ -245,14 +299,18 @@ void doWork(int descriptor, icalset* fileset) {
   NETWORKING_LOG("Message End");
 
   istringstream iss(meeting_as_str);
+=======
+>>>>>>> e279d1f2088fc23704a4ef1a98890207cedda228
   Meeting *meeting = new Meeting();
-  iss >> *meeting;
+  receiveMeeting(*meeting, descriptor);
 
   if (meeting->option == Meeting::INVITATION) {
+    // Find free times for invitee that are before the deadline
     CompareTimeSets handler;
     unordered_set<icalperiodtype *> free_times;
     handler.CompareSets(meeting, fileset, &free_times);
 
+<<<<<<< HEAD
     unordered_set<icalperiodtype *>::iterator it;
     string freeTimes;
 
@@ -264,12 +322,32 @@ void doWork(int descriptor, icalset* fileset) {
 
       outfile << freeTime << endl;
       freeTimes += freeTime;
+=======
+    // Send those times back
+    meeting->option = Meeting::POSSIBLE_TIMES;
+    meeting->possible_times = free_times;
+
+    cout << "possibleTimes on the host side: " << endl << endl;
+
+    unordered_set<icalperiodtype *>::iterator it;
+    for (it = free_times.begin(); it != free_times.end(); ++it) {
+      string freeTime = icalperiodtype_as_ical_string(**it);
+      cout << "- " << freeTime << endl;
+>>>>>>> e279d1f2088fc23704a4ef1a98890207cedda228
     }
 
-    sendMessage(freeTimes, descriptor);
+    sendMeeting(*meeting, descriptor);
   }
 
+<<<<<<< HEAD
   /* close file when done writing to file */
   outfile.close();
   close(descriptor);
+=======
+  // Wait for award or rejection
+  Meeting *meeting2 = new Meeting();
+  receiveMeeting(*meeting2, descriptor);
+  string result = meeting2->option == Meeting::AWARD ? "Award" : "Rejection";
+  cout << "Meeting " << result << " received" << flush;
+>>>>>>> e279d1f2088fc23704a4ef1a98890207cedda228
 }

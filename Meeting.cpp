@@ -1,11 +1,13 @@
+#include "Entity.h"
+#include "Meeting.h"
+
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <algorithm>
+using namespace std;
 
-#include "Entity.h"
-
-Meeting::Meeting(){}
+Meeting::Meeting() : meetingID(0) {}
 
 Meeting::~Meeting(){
  if(host)
