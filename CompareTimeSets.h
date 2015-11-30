@@ -6,9 +6,10 @@
 
 class CompareTimeSets{
   public:
-  
+
     /** Compares the host's possible times with the attendee's possible times and returns the set of free times **/
     void CompareSets(Meeting* meeting,  icalset *set, std::unordered_set<icalperiodtype *>* free_times);
+    void findIntersection(std::unordered_set<icalperiodtype *>* a, std::unordered_set<icalperiodtype *>* b, std::unordered_set<icalperiodtype *> *result);
 };
 
 /** template for finding the intersection between two unordered sets **/

@@ -5,7 +5,7 @@
 
 #include "Entity.h"
 
-Meeting::Meeting(){}
+Meeting::Meeting() : meetingID(0) {}
 
 Meeting::~Meeting(){
  if(host)

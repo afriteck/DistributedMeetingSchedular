@@ -1,4 +1,6 @@
 #include "networking.h"
+#include "Entity.h"
+
 #include <strings.h>
 #include <string.h>
 #include <netinet/in.h>
@@ -8,6 +10,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <iostream>
+#include <sstream>
 using namespace std;
 
 void printErrorMsg(string msg) {
@@ -155,4 +158,21 @@ int receiveMessage(string& buff, int descriptor) {
   }
 
   return numBytesRcvd + sizeof(stringSize);
+}
+
+void receiveMeeting(Meeting& meeting, int descriptor)
+{
+  string meeting_as_str;
+  receiveMessage(meeting_as_str, descriptor);
+
+  istringstream iss(meeting_as_str);
+  iss >> meeting;
+}
+
+void sendMeeting(Meeting& meeting, int descriptor)
+{
+  stringstream ss;
+  ss << meeting;
+  string str = ss.str();
+  sendMessage(str, descriptor);
 }
