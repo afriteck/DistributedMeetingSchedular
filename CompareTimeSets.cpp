@@ -1,4 +1,5 @@
 #include "CompareTimeSets.h"
+#include "Meeting.h"
 
 void CompareTimeSets::CompareSets(Meeting* meeting,  icalset *set, std::unordered_set<icalperiodtype *>* free_times){
 	TimeSlotFinder finder;

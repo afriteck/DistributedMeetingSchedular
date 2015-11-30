@@ -1,5 +1,5 @@
 #include "networking.h"
-#include "Entity.h"
+#include "Meeting.h"
 
 #include <strings.h>
 #include <string.h>

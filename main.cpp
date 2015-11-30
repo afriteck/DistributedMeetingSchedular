@@ -11,7 +11,7 @@
 #include "TimeSlotFinder.h"
 #include "CompareTimeSets.h"
 #include "networking.h"
-#include "Entity.h"
+#include "Meeting.h"
 using namespace std;
 
 mutex invitationResponse;
