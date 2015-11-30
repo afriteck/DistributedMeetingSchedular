@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <list>
 #include <sstream>
 #include <thread>
@@ -71,11 +72,15 @@ void invitePeopleToMeeting(list<Person *> *people, Meeting *meeting) {
 }
 
 bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
+
+  /* Write results to a file */
+  ofstream outfile;
+  outfile.open("possibleHostTimes.txt");
+
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
-  cout << "Suggested times for meeting with deadline "
-  << icaltime_as_ical_string(*meeting->deadline) << endl;
-  cout << *meeting << endl;
+
+  outfile << "Suggested times for meeting with deadline: " << icaltime_as_ical_string(*meeting->deadline) << endl << endl; 
 
   /* Check if the deadline for the meeting is backwards or doesn't exist */
   int deadlineCheck = icaltime_compare(*meeting->deadline, icaltime_today());
@@ -97,11 +102,19 @@ bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
   }
 
   else {
+
+    cout << endl << "My possible free time has been written to a file ..." << endl << endl;
+    outfile << "Possible Suggested times by the host: " << endl << endl;
+
     for (unordered_set<icalperiodtype *>::iterator it = meeting->possible_times.begin();
         it != meeting->possible_times.end();
         ++it) {
-         cout << "- " << icalperiodtype_as_ical_string(**it) << endl;
+	outfile << icalperiodtype_as_ical_string(**it) << endl;
     }
+
+    /* Close file after writing to file */
+    outfile.close();
+
     return true;
   }
   return false;
@@ -223,6 +236,10 @@ void doWork(int descriptor, icalset* fileset) {
   string meeting_as_str;
   receiveMessage(meeting_as_str, descriptor);
 
+  /* Open a file in a write mode */
+  ofstream outfile;
+  outfile.open("hostAndAttendeeFreeTimes.txt");
+
   NETWORKING_LOG("Message Start");
   NETWORKING_LOG(meeting_as_str << flush);
   NETWORKING_LOG("Message End");
@@ -236,18 +253,23 @@ void doWork(int descriptor, icalset* fileset) {
     unordered_set<icalperiodtype *> free_times;
     handler.CompareSets(meeting, fileset, &free_times);
 
-    cout << "possibleTimes on the host side: " << endl << endl;
-
     unordered_set<icalperiodtype *>::iterator it;
     string freeTimes;
+
+    cout << endl << "Writing free time between the host and attendee to file ...." << endl;
+    outfile << "Free times between host and attendee: " << endl << endl;   
+
     for (it = free_times.begin(); it != free_times.end(); ++it) {
       string freeTime = icalperiodtype_as_ical_string(**it);
-      cout << "- " << freeTime << endl;
+
+      outfile << freeTime << endl;
       freeTimes += freeTime;
     }
 
     sendMessage(freeTimes, descriptor);
   }
 
+  /* close file when done writing to file */
+  outfile.close();
   close(descriptor);
 }
