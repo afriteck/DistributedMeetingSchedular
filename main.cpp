@@ -62,36 +62,35 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
   vector<thread*> threads;
   vector<Meeting *> *v = new vector<Meeting *>;
 
+  // Send out invitations on separate threads
   for (list<Person*>::iterator it = people->begin(); it != people->end(); ++it) {
     Person *person = *it;
     thread *t = new thread(invitePersonToMeeting, person, meeting, v);
     threads.push_back(t);
   }
 
+  // Wait for replies
   vector<thread *>::iterator it;
   for (it = threads.begin(); it != threads.end(); ++it) {
     thread *t = *it;
     t->join();
   }
 
-  cout << "the vector has " << v->size() << " elements!" << endl;
-  // unordered_set<icalperiodtype *> first = v->at(0);
-
+  // Find intersection of all replies
   CompareTimeSets c;
   vector<Meeting *>::iterator meeting_it;
   Meeting *m = v->front();
   unordered_set<icalperiodtype *> *free_times = &m->possible_times;
-  // unordered_set<icalperiodtype *> *free_times = v->front();
-
   for (meeting_it = v->begin(); meeting_it != v->end(); ++meeting_it) {
     c.findIntersection(free_times, &(*meeting_it)->possible_times, free_times);
   }
 
+  // Check host calendar to see if intersecting time slot is still available
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
-
   c.findIntersection(free_times, &meeting->possible_times, free_times);
 
+  // Send back rejections or awards
   meeting->possible_times.clear();
   if (!free_times->empty()) {
     meeting->possible_times.insert(*free_times->begin());
@@ -100,20 +99,8 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
   for (list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
     meeting->option = free_times->empty() ? Meeting::REJECT : Meeting::AWARD;
     Person *person = *it;
-    cout << "Sending thingamahig to person " << person;
     sendMeeting(*meeting, person->descriptor);
   }
-  // pick a time from the set
-  // for each person
-      // if the time is null, send an abandonment message
-      // otherwise, send an award message
-
-  // CompareTimeSets c;
-  // c.findIntersection()
-  // find all the common times
-  // check if the host is available for those
-  // if yes, send out awards
-  // otherwise, send rejections
 }
 
 void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v) {
@@ -130,9 +117,7 @@ void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *
   v->push_back(responseFromAttendee);
   invitationResponse.unlock();
 
-
   if (responseFromAttendee->option == Meeting::POSSIBLE_TIMES) {
-    cout << "We got a response from the person we invited!" << endl;
     cout << *meeting << endl;
   }
 }
@@ -288,22 +273,16 @@ void listen(int port, icalset* PATH) {
 }
 
 void doWork(int descriptor, icalset* fileset) {
-  string meeting_as_str;
-  receiveMessage(meeting_as_str, descriptor);
-
-  NETWORKING_LOG("Message Start");
-  NETWORKING_LOG(meeting_as_str << flush);
-  NETWORKING_LOG("Message End");
-
-  istringstream iss(meeting_as_str);
   Meeting *meeting = new Meeting();
-  iss >> *meeting;
+  receiveMeeting(*meeting, descriptor);
 
   if (meeting->option == Meeting::INVITATION) {
+    // Find free times for invitee that are before the deadline
     CompareTimeSets handler;
     unordered_set<icalperiodtype *> free_times;
     handler.CompareSets(meeting, fileset, &free_times);
 
+    // Send those times back
     meeting->option = Meeting::POSSIBLE_TIMES;
     meeting->possible_times = free_times;
 
@@ -318,10 +297,9 @@ void doWork(int descriptor, icalset* fileset) {
     sendMeeting(*meeting, descriptor);
   }
 
+  // Wait for award or rejection
   Meeting *meeting2 = new Meeting();
-  cout << "Waiting for a reply " << endl;
   receiveMeeting(*meeting2, descriptor);
-  cout << "Meeting option recevied " << meeting2->option << flush;
-
-  // close(descriptor);
+  string result = meeting2->option == Meeting::AWARD ? "Award" : "Rejection";
+  cout << "Meeting " << result << " received" << flush;
 }
