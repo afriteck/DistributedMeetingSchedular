@@ -1,5 +1,5 @@
 #include "networking.h"
-#include "Entity.h"
+#include "Meeting.h"
 
 #include <strings.h>
 #include <string.h>
@@ -165,6 +165,10 @@ void receiveMeeting(Meeting& meeting, int descriptor)
   string meeting_as_str;
   receiveMessage(meeting_as_str, descriptor);
 
+  NETWORKING_LOG("Message Start");
+  NETWORKING_LOG(meeting_as_str << flush);
+  NETWORKING_LOG("Message End");
+
   istringstream iss(meeting_as_str);
   iss >> meeting;
 }
@@ -174,5 +178,10 @@ void sendMeeting(Meeting& meeting, int descriptor)
   stringstream ss;
   ss << meeting;
   string str = ss.str();
+
+  NETWORKING_LOG("Message Start");
+  NETWORKING_LOG(str << flush);
+  NETWORKING_LOG("Message End");
+
   sendMessage(str, descriptor);
 }

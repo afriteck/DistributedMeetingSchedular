@@ -1,5 +1,5 @@
 #include "TimeSlotFinder.h"
-#include "Entity.h"
+#include "Meeting.h"
 #include "impl/icalspanlistimpl.h"
 #include <unordered_set>
 using namespace std;

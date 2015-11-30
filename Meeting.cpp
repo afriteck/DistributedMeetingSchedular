@@ -1,9 +1,11 @@
+#include "Entity.h"
+#include "Meeting.h"
+
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <algorithm>
-
-#include "Entity.h"
+using namespace std;
 
 Meeting::Meeting() : meetingID(0) {}
 
