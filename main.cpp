@@ -41,8 +41,6 @@ int main(int argc, char *argv[]) {
   thread t1(listen, atoi(argv[2]), fileset);
   t1.detach();
 
-  const char *path = argv[1];
-
   while (displayMainMenu() != 2) {
     Meeting *meeting = askHostForMeetingInfo();
     list<Person *> *people = promptForInvitees();
