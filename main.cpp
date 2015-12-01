@@ -26,6 +26,7 @@ void doWork(int descriptor, icalset* set);
 void sendAllInvitations(list<Person *> *people, Meeting *m, icalset *set);
 void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v);
 bool findOpenTimeSlots(Meeting *m, icalset *set);
+void saveMeeting(Meeting *meeting, icalset *set);
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
@@ -334,7 +335,7 @@ void listen(int port, icalset* PATH) {
     }
 }
 
-void doWork(int descriptor, icalset* fileset) {
+void doWork(int descriptor, icalset* set) {
   /* Open a file in a write mode */
   ofstream outfile;
   outfile.open("hostAndAttendeeFreeTimes.txt");
@@ -346,7 +347,7 @@ void doWork(int descriptor, icalset* fileset) {
     // Find free times for invitee that are before the deadline
     CompareTimeSets handler;
     unordered_set<icalperiodtype *> free_times;
-    handler.CompareSets(meeting, fileset, &free_times);
+    handler.CompareSets(meeting, set, &free_times);
 
     // Send those times back
     meeting->option = Meeting::POSSIBLE_TIMES;
@@ -409,8 +410,19 @@ void doWork(int descriptor, icalset* fileset) {
   }
 
   /* Mark the time on the calendar here */  
-  
+  // The original icalset is read-only.
+  icalset *readWriteSet = icalfileset_new(icalfileset_path(set));
+  saveMeeting(meeting, readWriteSet);
+  icalfileset_free(readWriteSet);
+
   /* close file when done writing to file */
   outfile.close();
   close(descriptor);
+}
+
+void saveMeeting(Meeting *meeting, icalset *set)
+{
+  icalcomponent *component = meeting->to_icalcomponent();
+  icalfileset_add_component(set, component);
+  icalfileset_commit(set);
 }
