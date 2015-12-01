@@ -284,18 +284,9 @@ void listen(int port, icalset* PATH) {
 }
 
 void doWork(int descriptor, icalset* fileset) {
-  string meeting_as_str;
-  receiveMessage(meeting_as_str, descriptor);
-
   /* Open a file in a write mode */
   ofstream outfile;
   outfile.open("hostAndAttendeeFreeTimes.txt");
-
-  NETWORKING_LOG("Message Start");
-  NETWORKING_LOG(meeting_as_str << flush);
-  NETWORKING_LOG("Message End");
-
-  istringstream iss(meeting_as_str);
 
   Meeting *meeting = new Meeting();
   receiveMeeting(*meeting, descriptor);
@@ -326,13 +317,13 @@ void doWork(int descriptor, icalset* fileset) {
     sendMeeting(*meeting, descriptor);
   }
 
-  /* close file when done writing to file */
-  outfile.close();
-  close(descriptor);
-
   // Wait for award or rejection
   Meeting *meeting2 = new Meeting();
   receiveMeeting(*meeting2, descriptor);
   string result = meeting2->option == Meeting::AWARD ? "Award" : "Rejection";
   cout << "Meeting " << result << " received" << flush;
+
+  /* close file when done writing to file */
+  outfile.close();
+  close(descriptor);
 }
