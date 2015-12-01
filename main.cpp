@@ -42,8 +42,6 @@ int main(int argc, char *argv[]) {
   thread t1(listen, atoi(argv[2]), fileset);
   t1.detach();
 
-  const char *path = argv[1];
-
   while (displayMainMenu() != 2) {
     Meeting *meeting = askHostForMeetingInfo();
     list<Person *> *people = promptForInvitees();
@@ -132,7 +130,7 @@ bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
 
-  outfile << "Suggested times for meeting with deadline: " << icaltime_as_ical_string(*meeting->deadline) << endl << endl; 
+  outfile << "Suggested times for meeting with deadline: " << icaltime_as_ical_string(*meeting->deadline) << endl << endl;
 
   /* Check if the deadline for the meeting is backwards or doesn't exist */
   int deadlineCheck = icaltime_compare(*meeting->deadline, icaltime_today());
@@ -286,7 +284,6 @@ void listen(int port, icalset* PATH) {
 }
 
 void doWork(int descriptor, icalset* fileset) {
-<<<<<<< HEAD
   string meeting_as_str;
   receiveMessage(meeting_as_str, descriptor);
 
@@ -299,8 +296,7 @@ void doWork(int descriptor, icalset* fileset) {
   NETWORKING_LOG("Message End");
 
   istringstream iss(meeting_as_str);
-=======
->>>>>>> e279d1f2088fc23704a4ef1a98890207cedda228
+
   Meeting *meeting = new Meeting();
   receiveMeeting(*meeting, descriptor);
 
@@ -310,44 +306,33 @@ void doWork(int descriptor, icalset* fileset) {
     unordered_set<icalperiodtype *> free_times;
     handler.CompareSets(meeting, fileset, &free_times);
 
-<<<<<<< HEAD
+    // Send those times back
+    meeting->option = Meeting::POSSIBLE_TIMES;
+    meeting->possible_times = free_times;
+
     unordered_set<icalperiodtype *>::iterator it;
     string freeTimes;
 
     cout << endl << "Writing free time between the host and attendee to file ...." << endl;
-    outfile << "Free times between host and attendee: " << endl << endl;   
+    outfile << "Free times between host and attendee: " << endl << endl;
 
     for (it = free_times.begin(); it != free_times.end(); ++it) {
       string freeTime = icalperiodtype_as_ical_string(**it);
 
       outfile << freeTime << endl;
       freeTimes += freeTime;
-=======
-    // Send those times back
-    meeting->option = Meeting::POSSIBLE_TIMES;
-    meeting->possible_times = free_times;
-
-    cout << "possibleTimes on the host side: " << endl << endl;
-
-    unordered_set<icalperiodtype *>::iterator it;
-    for (it = free_times.begin(); it != free_times.end(); ++it) {
-      string freeTime = icalperiodtype_as_ical_string(**it);
-      cout << "- " << freeTime << endl;
->>>>>>> e279d1f2088fc23704a4ef1a98890207cedda228
     }
 
     sendMeeting(*meeting, descriptor);
   }
 
-<<<<<<< HEAD
   /* close file when done writing to file */
   outfile.close();
   close(descriptor);
-=======
+
   // Wait for award or rejection
   Meeting *meeting2 = new Meeting();
   receiveMeeting(*meeting2, descriptor);
   string result = meeting2->option == Meeting::AWARD ? "Award" : "Rejection";
   cout << "Meeting " << result << " received" << flush;
->>>>>>> e279d1f2088fc23704a4ef1a98890207cedda228
 }
