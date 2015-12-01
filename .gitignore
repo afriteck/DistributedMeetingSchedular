@@ -123,6 +123,8 @@ Temporary Items
 
 ### MeetingScheduler ###
 agent
+hostAndAttendeeFreeTimes.txt
+possibleHostTimes.txt
 
 ### Vim ###
 *.swp
