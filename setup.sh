@@ -19,4 +19,7 @@ cd libical/build
 cmake ..
 make
 sudo make install
-sudo ldconfig
+
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+  sudo ldconfig
+fi
