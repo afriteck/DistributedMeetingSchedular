@@ -17,6 +17,10 @@ using namespace std;
 
 mutex invitationResponse;
 
+const string MEETING_SCHEDULED = "MEETING_SCHEDULED";
+const string MEETING_NOT_SCHEDULED = "MEETING_NOT_SCHEDULED";
+const string STILL_WORKING = "STILL_WORKING";
+
 string sendMeetingInfoToAttendeesInANiceFormat(int&, int&, int&, int&, int&, int&, unsigned int&);
 list<Person *>* promptForInvitees();
 Meeting * askHostForMeetingInfo();
@@ -89,7 +93,7 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
   c.findIntersection(free_times, &meeting->possible_times, free_times);
- 
+
 
   while(1) {
 
@@ -118,42 +122,26 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
       }
     }
 
-    if(notFree == true) {
+    if (notFree) {
       icalperiodtype *temp = *free_times->begin();
 
-      if(!(free_times->empty())) {
+      string msg = free_times->empty() ? MEETING_NOT_SCHEDULED : STILL_WORKING;
+      if (msg == STILL_WORKING) {
         free_times->erase(temp);
-
-        for(list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
-          Person *person = *it;
-
-	  string workingOnIt = "still doing work";
-          sendMessage(workingOnIt, person->descriptor);
-        }
-      } 
-
-      else {
-        for(list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
-          Person *person = *it;
-     
-          cout << "The meeting can no longer hold" << endl;
-          string meetingFailed = "cant schedule meeting";
-          sendMessage(meetingFailed, person->descriptor);
-	}
-        break;
       }
-    } 
 
-    else {
+      for (list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
+        Person *person = *it;
+        sendMessage(msg, person->descriptor);
+      }
+    } else {
       for(list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
-          Person *person = *it;
-
-          string meetingFailed = "Meeting has been scheduled";
-          sendMessage(meetingFailed, person->descriptor);
-
-          /* Mark the time on the hosts calendar here as well */
-        }
-        break;
+        Person *person = *it;
+        string msg = MEETING_SCHEDULED;
+        sendMessage(msg, person->descriptor);
+        saveMeeting(meeting, set);
+      }
+      break;
     }
   }
 }
@@ -211,7 +199,7 @@ bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
     for (unordered_set<icalperiodtype *>::iterator it = meeting->possible_times.begin();
         it != meeting->possible_times.end();
         ++it) {
-	outfile << icalperiodtype_as_ical_string(**it) << endl;
+    	outfile << icalperiodtype_as_ical_string(**it) << endl;
     }
 
     /* Close file after writing to file */
@@ -378,42 +366,30 @@ void doWork(int descriptor, icalset* set) {
 
     CompareTimeSets handler;
     unordered_set<icalperiodtype *> free_times_final;
-    handler.CompareSets(meeting2, fileset, &free_times_final);
+    handler.CompareSets(meeting2, set, &free_times_final);
 
-    if(meeting2->option == Meeting::AWARD && !(free_times_final.empty())) {
-     string free = "free";
-     sendMessage(free, descriptor);
-    }
-
-    else {
-      string notFree = "not free";
-      sendMessage(notFree, descriptor);
-    }
+    bool isFree = meeting2->option == Meeting::AWARD && !(free_times_final.empty());
+    string msg = isFree ? "free" : "not free";
+    sendMessage(msg, descriptor);
 
     /* Check what we received back from the host */
     string *messageReceivedFromHost = new string;
- 
+
     receiveMessage(*messageReceivedFromHost, descriptor);
 
-    if(messageReceivedFromHost->compare("still doing work") == 0) {
+    if (messageReceivedFromHost->compare(STILL_WORKING) == 0) {
       continue;
     }
 
-    else if(messageReceivedFromHost->compare("cant schedule meeting") == 0) {
+    else if (messageReceivedFromHost->compare(MEETING_NOT_SCHEDULED) == 0) {
       break;
     }
 
-    else if(messageReceivedFromHost->compare("meeting has been scheduled") == 0) {
+    else if (messageReceivedFromHost->compare(MEETING_SCHEDULED) == 0) {
+      saveMeeting(meeting2, set);
       break;
-   }
- 
+    }
   }
-
-  /* Mark the time on the calendar here */  
-  // The original icalset is read-only.
-  icalset *readWriteSet = icalfileset_new(icalfileset_path(set));
-  saveMeeting(meeting, readWriteSet);
-  icalfileset_free(readWriteSet);
 
   /* close file when done writing to file */
   outfile.close();
@@ -422,7 +398,12 @@ void doWork(int descriptor, icalset* set) {
 
 void saveMeeting(Meeting *meeting, icalset *set)
 {
+  // Open a second set because the original icalset is read-only.
+  icalerrorenum error;
+  icalset *readWriteSet = icalfileset_new(icalfileset_path(set));
   icalcomponent *component = meeting->to_icalcomponent();
   icalfileset_add_component(set, component);
   icalfileset_commit(set);
+  icalfileset_free(readWriteSet);
 }
+
