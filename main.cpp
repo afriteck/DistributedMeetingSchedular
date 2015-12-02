@@ -88,17 +88,72 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
   c.findIntersection(free_times, &meeting->possible_times, free_times);
+ 
 
-  // Send back rejections or awards
-  meeting->possible_times.clear();
-  if (!free_times->empty()) {
-    meeting->possible_times.insert(*free_times->begin());
-  }
+  while(1) {
 
-  for (list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
-    meeting->option = free_times->empty() ? Meeting::REJECT : Meeting::AWARD;
-    Person *person = *it;
-    sendMeeting(*meeting, person->descriptor);
+    bool notFree = false;
+
+    // Send back rejections or awards
+    meeting->possible_times.clear();
+    if (!free_times->empty()) {
+      meeting->possible_times.insert(*free_times->begin());
+    }
+
+    for (list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
+      meeting->option = free_times->empty() ? Meeting::REJECT : Meeting::AWARD;
+      Person *person = *it;
+      sendMeeting(*meeting, person->descriptor);
+
+      string *messageBackFromAttendee = new string;
+      receiveMessage(*messageBackFromAttendee, person->descriptor);
+
+      if(messageBackFromAttendee->compare("free") == 0) {
+        cout << endl << "We can hold a meeting" << endl << endl;
+      }
+
+      else if(messageBackFromAttendee->compare("not free") == 0) {
+        notFree = true;
+      }
+    }
+
+    if(notFree == true) {
+      icalperiodtype *temp = *free_times->begin();
+
+      if(!(free_times->empty())) {
+        free_times->erase(temp);
+
+        for(list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
+          Person *person = *it;
+
+	  string workingOnIt = "still doing work";
+          sendMessage(workingOnIt, person->descriptor);
+        }
+      } 
+
+      else {
+        for(list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
+          Person *person = *it;
+     
+          cout << "The meeting can no longer hold" << endl;
+          string meetingFailed = "cant schedule meeting";
+          sendMessage(meetingFailed, person->descriptor);
+	}
+        break;
+      }
+    } 
+
+    else {
+      for(list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
+          Person *person = *it;
+
+          string meetingFailed = "Meeting has been scheduled";
+          sendMessage(meetingFailed, person->descriptor);
+
+          /* Mark the time on the hosts calendar here as well */
+        }
+        break;
+    }
   }
 }
 
@@ -115,10 +170,6 @@ void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *
   invitationResponse.lock();
   v->push_back(responseFromAttendee);
   invitationResponse.unlock();
-
-  if (responseFromAttendee->option == Meeting::POSSIBLE_TIMES) {
-    cout << *meeting << endl;
-  }
 }
 
 bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
@@ -317,12 +368,48 @@ void doWork(int descriptor, icalset* fileset) {
     sendMeeting(*meeting, descriptor);
   }
 
-  // Wait for award or rejection
-  Meeting *meeting2 = new Meeting();
-  receiveMeeting(*meeting2, descriptor);
-  string result = meeting2->option == Meeting::AWARD ? "Award" : "Rejection";
-  cout << "Meeting " << result << " received" << flush;
+  while (1) {
+    // Wait for award or rejection
+    Meeting *meeting2 = new Meeting();
+    receiveMeeting(*meeting2, descriptor);
+    string result = meeting2->option == Meeting::AWARD ? "Award" : "Rejection";
+    //cout << "Meeting " << result << " received" << flush;
 
+    CompareTimeSets handler;
+    unordered_set<icalperiodtype *> free_times_final;
+    handler.CompareSets(meeting2, fileset, &free_times_final);
+
+    if(meeting2->option == Meeting::AWARD && !(free_times_final.empty())) {
+     string free = "free";
+     sendMessage(free, descriptor);
+    }
+
+    else {
+      string notFree = "not free";
+      sendMessage(notFree, descriptor);
+    }
+
+    /* Check what we received back from the host */
+    string *messageReceivedFromHost = new string;
+ 
+    receiveMessage(*messageReceivedFromHost, descriptor);
+
+    if(messageReceivedFromHost->compare("still doing work") == 0) {
+      continue;
+    }
+
+    else if(messageReceivedFromHost->compare("cant schedule meeting") == 0) {
+      break;
+    }
+
+    else if(messageReceivedFromHost->compare("meeting has been scheduled") == 0) {
+      break;
+   }
+ 
+  }
+
+  /* Mark the time on the calendar here */  
+  
   /* close file when done writing to file */
   outfile.close();
   close(descriptor);
