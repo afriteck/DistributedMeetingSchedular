@@ -20,6 +20,8 @@ mutex invitationResponse;
 const string MEETING_SCHEDULED = "MEETING_SCHEDULED";
 const string MEETING_NOT_SCHEDULED = "MEETING_NOT_SCHEDULED";
 const string STILL_WORKING = "STILL_WORKING";
+const string FREE = "FREE";
+const string NOT_FREE = "NOT_FREE";
 
 string sendMeetingInfoToAttendeesInANiceFormat(int&, int&, int&, int&, int&, int&, unsigned int&);
 list<Person *>* promptForInvitees();
@@ -113,11 +115,11 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
       string *messageBackFromAttendee = new string;
       receiveMessage(*messageBackFromAttendee, person->descriptor);
 
-      if(messageBackFromAttendee->compare("free") == 0) {
+      if(messageBackFromAttendee->compare(FREE) == 0) {
         cout << endl << "We can hold a meeting" << endl << endl;
       }
 
-      else if(messageBackFromAttendee->compare("not free") == 0) {
+      else if(messageBackFromAttendee->compare(NOT_FREE) == 0) {
         notFree = true;
       }
     }
@@ -369,7 +371,7 @@ void doWork(int descriptor, icalset* set) {
     handler.CompareSets(meeting2, set, &free_times_final);
 
     bool isFree = meeting2->option == Meeting::AWARD && !(free_times_final.empty());
-    string msg = isFree ? "free" : "not free";
+    string msg = isFree ? FREE : NOT_FREE;
     sendMessage(msg, descriptor);
 
     /* Check what we received back from the host */
