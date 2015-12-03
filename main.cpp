@@ -213,10 +213,13 @@ bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
 }
 
 Meeting * askHostForMeetingInfo() {
-  string year, month, day, hour, minute;
+  string year, month, day, hour, minute, topic;
   int durationInMinutes;
 
   cout << "Please enter the latest possible date that the meeting can be held." << endl;
+  cout << "  Enter desired topic for meeting: ";
+  cin.get();
+  getline(cin, topic);
   cout << "  Year: ";
   cin >> year;
   cout << "  Month: ";
@@ -240,6 +243,7 @@ Meeting * askHostForMeetingInfo() {
 
   Meeting *meeting = new Meeting();
   meeting->duration = new icaldurationtype(icaldurationtype_from_int(durationInMinutes * 60));
+ meeting->topic = topic;
   meeting->deadline = new icaltimetype(icaltime_from_string(iso_str.c_str()));
   meeting->option = Meeting::INVITATION;
   icaltime_set_timezone(meeting->deadline, tz);

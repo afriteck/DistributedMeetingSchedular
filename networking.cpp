@@ -171,6 +171,7 @@ void receiveMeeting(Meeting& meeting, int descriptor)
 
   istringstream iss(meeting_as_str);
   iss >> meeting;
+
 }
 
 void sendMeeting(Meeting& meeting, int descriptor)
