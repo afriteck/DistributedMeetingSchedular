@@ -243,7 +243,7 @@ Meeting * askHostForMeetingInfo() {
 
   Meeting *meeting = new Meeting();
   meeting->duration = new icaldurationtype(icaldurationtype_from_int(durationInMinutes * 60));
- meeting->topic = topic;
+  meeting->topic = topic;
   meeting->deadline = new icaltimetype(icaltime_from_string(iso_str.c_str()));
   meeting->option = Meeting::INVITATION;
   icaltime_set_timezone(meeting->deadline, tz);

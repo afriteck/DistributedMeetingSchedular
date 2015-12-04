@@ -7,7 +7,10 @@
 #include <algorithm>
 using namespace std;
 
-Meeting::Meeting() : meetingID(0), topic("") {}
+Meeting::Meeting() : meetingID(0) { 
+  topic = "Untitled Event";
+  
+}
 
 Meeting::~Meeting(){
  if(host)
@@ -45,13 +48,22 @@ unordered_set<icalperiodtype *> string_to_possible_times(string str) {
 
 
 /*Append an astericks to spaces string */
-string Meeting::topic_as_string_astericks(const string& topic) const {
+/*string Meeting::topic_as_string_astericks(const string& topic) const {
 
   string appendAstericks = topic;
   replace(appendAstericks.begin(), appendAstericks.end(), ' ', '*');
 
   return appendAstericks;
+}*/
+
+string Meeting::topic_as_string_astericks() const {
+
+  string appendAstericks = this->topic;
+  replace(appendAstericks.begin(), appendAstericks.end(), ' ', '*');
+
+  return appendAstericks;
 }
+
 
 
 string Meeting::topic_as_string_noastericks(string& topic) {
@@ -62,11 +74,11 @@ string Meeting::topic_as_string_noastericks(string& topic) {
   return removeAstericks;
 }
 
-
 ostream& operator<<(ostream& os, const Meeting& m) {
 
   os << m.meetingID << " ";
-  os << m.topic_as_string_astericks(m.topic) <<  " ";
+  //os << m.topic_as_string_astericks(m.topic) <<  " ";
+  os << m.topic_as_string_astericks() << " ";
   os << m.option << " ";
   os << icaldurationtype_as_ical_string(*m.duration) << " ";
   os << m.possible_times_as_string() << " ";
@@ -82,6 +94,7 @@ istream& operator>>(istream &in, Meeting& obj) {
   string meetingTopicWithoutAstericks;
   in >> meetingTopicWithoutAstericks;
   obj.topic = obj.topic_as_string_noastericks(meetingTopicWithoutAstericks);
+
 
   int optionAsInt;
   in >> optionAsInt;

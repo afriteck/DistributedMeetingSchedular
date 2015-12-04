@@ -113,7 +113,7 @@ std::unordered_set<icalperiodtype*> TimeSlotFinder::findAvailability(Meeting *me
       }
     }
   }
-	return possibleTimes;
+  return possibleTimes;
 }
 
 
