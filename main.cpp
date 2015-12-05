@@ -407,9 +407,20 @@ void saveMeeting(Meeting *meeting, icalset *set)
   // Open a second set because the original icalset is read-only.
   icalerrorenum error;
   icalset *readWriteSet = icalfileset_new(icalfileset_path(set));
+  if (readWriteSet == NULL) {
+    cout << "saveMeeting: Failed to open icalfileset" << endl;
+    return;
+  }
+
+  // TODO: stop printing to stdout
   icalcomponent *component = meeting->to_icalcomponent();
-  icalfileset_add_component(set, component);
-  icalfileset_commit(set);
+  if (icalfileset_add_component(readWriteSet, component) == ICAL_NO_ERROR &&
+      icalfileset_commit(readWriteSet) == ICAL_NO_ERROR) {
+    cout << "Successfully saved meeting!" << endl;
+  } else {
+    cout << "Failed to save meeting! " << icalerror_strerror(icalerrno) << endl;
+    perror("file error");
+  }
   icalfileset_free(readWriteSet);
 }
 
