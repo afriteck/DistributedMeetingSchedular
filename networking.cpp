@@ -47,7 +47,7 @@ void createSocket(int *descriptor) {
 /* Bind the socket if creating a socket was successful */
 void bindSocket(struct sockaddr_in *address, int *descriptor) {
   socklen_t address_len = (socklen_t) sizeof(*address);
-  if (bind(*descriptor, (struct sockaddr *)address, address_len) < 0) {
+  if (::bind(*descriptor, (struct sockaddr *)address, address_len) < 0) {
     printErrorMsg("Can't bind socket\n");
   }
 }

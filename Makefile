@@ -1,7 +1,17 @@
-ARCH = $(shell dpkg-architecture -qDEB_BUILD_MULTIARCH)
 CXXFLAGS = -std=c++11
 EXECUTABLE = agent
-LDFLAGS = -Wl,-rpath /usr/local/lib/$(ARCH) -Llibical/build/lib
+OS := $(shell uname)
+
+ifeq ($(OS),Darwin)
+	INCLUDES = -I/usr/local/include
+	CXX = clang++
+	CXXFLAGS += -stdlib=libc++
+	LDFLAGS = -Llibical/build/lib
+else
+	ARCH = $(shell dpkg-architecture -qDEB_BUILD_MULTIARCH)
+	LDFLAGS = -Wl,-rpath /usr/local/lib/$(ARCH) -Llibical/build/lib
+endif
+
 LDLIBS = -lical -licalss -licalvcal -lical_cxx -licalss_cxx
 SRCS = main.cpp Entity.cpp Agent.cpp TimeSlotFinder.cpp networking.cpp CompareTimeSets.cpp Meeting.cpp
 OBJS = $(SRCS:.cpp=.o)
@@ -14,7 +24,7 @@ $(EXECUTABLE): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(EXECUTABLE) $(OBJS) $(LDFLAGS) $(LDLIBS)
 
 .cpp.o:
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $(INCLUDES) $< -o $@
 
 clean:
 	$(RM) *.o $(EXECUTABLE)
