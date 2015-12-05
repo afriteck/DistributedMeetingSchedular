@@ -7,10 +7,7 @@
 #include <algorithm>
 using namespace std;
 
-Meeting::Meeting() : meetingID(0) { 
-  topic = "Untitled Event";
-  
-}
+Meeting::Meeting() : meetingID(0), topic("Untitled Event"), host(NULL), duration(NULL), deadline(NULL) { }
 
 Meeting::~Meeting(){
  if(host)
@@ -87,7 +84,7 @@ ostream& operator<<(ostream& os, const Meeting& m) {
 }
 
 istream& operator>>(istream &in, Meeting& obj) {
-  
+
 
   in >> obj.meetingID;
 
