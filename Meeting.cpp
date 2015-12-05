@@ -43,39 +43,21 @@ unordered_set<icalperiodtype *> string_to_possible_times(string str) {
   return possible_times;
 }
 
-
-/*Append an astericks to spaces string */
-/*string Meeting::topic_as_string_astericks(const string& topic) const {
-
-  string appendAstericks = topic;
-  replace(appendAstericks.begin(), appendAstericks.end(), ' ', '*');
-
-  return appendAstericks;
-}*/
-
-string Meeting::topic_as_string_astericks() const {
-
-  string appendAstericks = this->topic;
-  replace(appendAstericks.begin(), appendAstericks.end(), ' ', '*');
-
-  return appendAstericks;
+string Meeting::topic_as_string_asterisks() const {
+  string appendAsterisks = this->topic;
+  replace(appendAsterisks.begin(), appendAsterisks.end(), ' ', '*');
+  return appendAsterisks;
 }
 
-
-
-string Meeting::topic_as_string_noastericks(string& topic) {
-
-  string removeAstericks = topic;
-  replace(removeAstericks.begin(), removeAstericks.end(), '*', ' ');
-
-  return removeAstericks;
+string Meeting::topic_as_string_no_asterisks(string& topic) {
+  string removeAsterisks = topic;
+  replace(removeAsterisks.begin(), removeAsterisks.end(), '*', ' ');
+  return removeAsterisks;
 }
 
 ostream& operator<<(ostream& os, const Meeting& m) {
-
   os << m.meetingID << " ";
-  //os << m.topic_as_string_astericks(m.topic) <<  " ";
-  os << m.topic_as_string_astericks() << " ";
+  os << m.topic_as_string_asterisks() << " ";
   os << m.option << " ";
   os << icaldurationtype_as_ical_string(*m.duration) << " ";
   os << m.possible_times_as_string() << " ";
@@ -84,14 +66,11 @@ ostream& operator<<(ostream& os, const Meeting& m) {
 }
 
 istream& operator>>(istream &in, Meeting& obj) {
-
-
   in >> obj.meetingID;
 
-  string meetingTopicWithoutAstericks;
-  in >> meetingTopicWithoutAstericks;
-  obj.topic = obj.topic_as_string_noastericks(meetingTopicWithoutAstericks);
-
+  string meetingTopicWithoutAsterisks;
+  in >> meetingTopicWithoutAsterisks;
+  obj.topic = obj.topic_as_string_no_asterisks(meetingTopicWithoutAsterisks);
 
   int optionAsInt;
   in >> optionAsInt;
