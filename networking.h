@@ -1,6 +1,6 @@
 #define MAX_PENDING_CONNECTIONS 10
 #define MAX_BUFF_LEN 1024
-#define NETWORKING_DEBUG 0
+#define NETWORKING_DEBUG 1
 
 #if NETWORKING_DEBUG
 #define NETWORKING_LOG(x) do { std::cout << "NETWORKING: " << x << endl; } while (0)
