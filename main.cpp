@@ -167,7 +167,7 @@ bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
 
   /* Write results to a file */
   ofstream outfile;
-  outfile.open("possibleHostTimes.log");
+  outfile.open("log/possibleHostTimes.log");
 
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
@@ -332,7 +332,7 @@ void listen(int port, icalset* PATH) {
 void doWork(int descriptor, icalset* set) {
   /* Open a file in a write mode */
   ofstream outfile;
-  outfile.open("hostAndAttendeeFreeTimes.log");
+  outfile.open("log/hostAndAttendeeFreeTimes.log");
 
   Meeting *meeting = new Meeting();
   receiveMeeting(*meeting, descriptor);
