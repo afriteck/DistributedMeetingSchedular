@@ -44,7 +44,7 @@ unordered_set<icalperiodtype *> string_to_possible_times(string str) {
 }
 
 string Meeting::topic_as_string_asterisks() const {
-  string appendAsterisks = this->topic;
+  string appendAsterisks = topic;
   replace(appendAsterisks.begin(), appendAsterisks.end(), ' ', '*');
   return appendAsterisks;
 }
