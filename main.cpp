@@ -141,8 +141,8 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
         Person *person = *it;
         string msg = MEETING_SCHEDULED;
         sendMessage(msg, person->descriptor);
-        saveMeeting(meeting, set);
       }
+      saveMeeting(meeting, set);
       break;
     }
   }
