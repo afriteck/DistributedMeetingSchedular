@@ -72,3 +72,13 @@ istream& operator>>(istream &in, Meeting& obj) {
   obj.deadline = new icaltimetype(icaltime_from_string(deadlineStr.c_str()));
   return in;
 }
+
+icalcomponent * Meeting::to_icalcomponent()
+{
+  icalcomponent *event = icalcomponent_new_vevent();
+  // Prevent setting summary to empty string since this generates an X-LIC-ERROR
+  icalcomponent_set_summary(event, topic.empty() ? "Untitled Event" : topic.c_str());
+  icalcomponent_set_dtstart(event, (*possible_times.begin())->start);
+  icalcomponent_set_dtend(event, (*possible_times.begin())->end);
+  return event;
+}
