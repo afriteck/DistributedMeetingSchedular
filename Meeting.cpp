@@ -99,3 +99,11 @@ icalcomponent * Meeting::to_icalcomponent()
   icalcomponent_set_dtend(event, (*possible_times.begin())->end);
   return event;
 }
+
+string Meeting::meeting_as_log_string()
+{
+  stringstream ss;
+  ss << "\"" << topic << "\" (duration: " << icaldurationtype_as_ical_string(*duration) << ", "
+     << "deadline " << icaltime_as_ical_string(*deadline) << ")";
+  return ss.str();
+}

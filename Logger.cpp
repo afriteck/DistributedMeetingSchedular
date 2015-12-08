@@ -1,5 +1,6 @@
 #include "Logger.h"
 #include "Meeting.h"
+#include "Entity.h"
 
 #include <fstream>
 #include <sstream>
@@ -9,39 +10,61 @@ mutex logMutex;
 
 Logger::Logger(string f) : filename(f) { }
 
-void Logger::log(Meeting *meeting, MessageType type)
+void Logger::log(Meeting *meeting, Person *person, MessageType type)
 {
   string msg;
   switch (type) {
     case FOUND_TIME_SLOTS:
       msg = foundTimeSlotsMessage(meeting);
-    break;
+      break;
+    case SEND_INVITATION:
+      msg = sendInvitationMessage(meeting, person);
+      break;
   }
 
   logMutex.lock();
   writeToFile(msg);
+  writeToFile("\n");
   logMutex.unlock();
 }
 
 void Logger::writeToFile(string msg)
 {
   ofstream ofs;
-  ofs.open(filename);
+  ofs.open(filename, ios_base::app | ios_base::out);
   ofs << msg;
   // Don't call close() explicitly; stream is closed when it goes out of scope
+}
+
+string periodtype_set_to_string(unordered_set<icalperiodtype *> set)
+{
+  stringstream ss;
+  unordered_set<icalperiodtype *>::iterator it;
+  for (it = set.begin(); it != set.end(); ++it) {
+    ss << icalperiodtype_as_ical_string(**it) << endl;
+  }
+  return ss.str();
 }
 
 string Logger::foundTimeSlotsMessage(Meeting *meeting)
 {
   stringstream ss;
-  ss << "Found " << meeting->possible_times.size() << " open time slots in host's calendar for \""
-     << meeting->topic << "\" (duration: " << icaldurationtype_as_ical_string(*meeting->duration) << ", "
-     << "deadline " << icaltime_as_ical_string(*meeting->deadline) << ")" << endl;
+  ss << "Found " << meeting->possible_times.size() << " open time slots in host's calendar for "
+     << meeting->meeting_as_log_string() << endl;
+
   ss << "====FOUND TIME SLOTS====" << endl;
-  unordered_set<icalperiodtype *>::iterator it;
-  for (it = meeting->possible_times.begin(); it != meeting->possible_times.end(); ++it) {
-    ss << icalperiodtype_as_ical_string(**it) << endl;
-  }
+  ss << periodtype_set_to_string(meeting->possible_times);
   ss << "========================" << endl;
+  return ss.str();
+}
+
+string Logger::sendInvitationMessage(Meeting *meeting, Person *person)
+{
+  stringstream ss;
+  ss << "Inviting " << *person << " to " << meeting->meeting_as_log_string() << endl;
+
+  ss << "====SUGGESTED TIMES FROM HOST====" << endl;
+  ss << periodtype_set_to_string(meeting->possible_times);
+  ss << "=================================" << endl;
   return ss.str();
 }

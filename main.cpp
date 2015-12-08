@@ -169,6 +169,8 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
 void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v) {
   cout << "* Sending invitation to " << *person << "...";
 
+  logger->log(meeting, person, Logger::SEND_INVITATION);
+
   int descriptor = -1;
   connectToServer(const_cast<char*>(person->IP_ADDRESS.c_str()), person->PORT_NUMBER, &descriptor);
   person->descriptor = descriptor;
@@ -199,7 +201,7 @@ bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
   } else if (deadlineCheck == 0) {
     cout << "Can't schedule meeting because the deadline is not far enough into the future." << endl;
   } else {
-    logger->log(meeting, Logger::FOUND_TIME_SLOTS);
+    logger->log(meeting, NULL, Logger::FOUND_TIME_SLOTS);
     return true;
   }
   return false;
