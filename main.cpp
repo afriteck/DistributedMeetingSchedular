@@ -13,6 +13,7 @@
 #include "CompareTimeSets.h"
 #include "networking.h"
 #include "Meeting.h"
+#include "Logger.h"
 using namespace std;
 
 mutex invitationResponse;
@@ -33,8 +34,14 @@ void sendAllInvitations(list<Person *> *people, Meeting *m, icalset *set);
 void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v);
 bool findOpenTimeSlots(Meeting *m, icalset *set);
 void saveMeeting(Meeting *meeting, icalset *set);
+string getTimestamp();
+
+Logger *logger;
 
 int main(int argc, char *argv[]) {
+  string filename = "log/" + getTimestamp() + ".log";
+  logger = new Logger(filename);
+
   if (argc < 3) {
     cout << "usage: ./agent [path-to-ics-file] [port-number]";
     return -1;
@@ -62,6 +69,17 @@ int main(int argc, char *argv[]) {
     cout << endl << "Free times with deadline:" << icaltime_as_ical_string(*meeting->deadline) << endl;
   }
   return 0;
+}
+
+string getTimestamp()
+{
+    time_t rawtime;
+    time(&rawtime);
+    struct tm * dt;
+    char buffer [30];
+    dt = localtime(&rawtime);
+    strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", dt);
+    return std::string(buffer);
 }
 
 void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) {
