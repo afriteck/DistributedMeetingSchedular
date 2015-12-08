@@ -182,15 +182,8 @@ void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *
 }
 
 bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
-
-  /* Write results to a file */
-  ofstream outfile;
-  outfile.open("log/possibleHostTimes.log");
-
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
-
-  outfile << "Suggested times for meeting with deadline: " << icaltime_as_ical_string(*meeting->deadline) << endl << endl;
 
   /* Check if the deadline for the meeting is backwards or doesn't exist */
   int deadlineCheck = icaltime_compare(*meeting->deadline, icaltime_today());
@@ -200,31 +193,13 @@ bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
       meeting->deadline->hour < 0 || meeting->deadline->hour > 23 ||
       meeting->deadline->minute < 0 || meeting->deadline->minute > 59 ||
       meeting->deadline->second < 0 || meeting->deadline->second > 59) {
-    cout << "Can't schedule meeting because of an invalid date" << endl;
-  }
-
-  else if (deadlineCheck == -1) {
-    cout << "This meeting cannot be scheduled due to invalid date!" << endl;
-  }
-
-  else if (deadlineCheck == 0) {
-    cout << "Schdeuling same day doesn't guarantee other invitees to make the meeting, therefore it can't be scheduled" << endl;
-  }
-
-  else {
-
-    cout << endl << "My possible free time has been written to a file ..." << endl << endl;
-    outfile << "Possible Suggested times by the host: " << endl << endl;
-
-    for (unordered_set<icalperiodtype *>::iterator it = meeting->possible_times.begin();
-        it != meeting->possible_times.end();
-        ++it) {
-    	outfile << icalperiodtype_as_ical_string(**it) << endl;
-    }
-
-    /* Close file after writing to file */
-    outfile.close();
-
+    cout << "Can't schedule meeting because an invalid date was entered." << endl;
+  } else if (deadlineCheck == -1) {
+    cout << "Can't schedule meeting because the deadline is in the past." << endl;
+  } else if (deadlineCheck == 0) {
+    cout << "Can't schedule meeting because the deadline is not far enough into the future." << endl;
+  } else {
+    logger->log(meeting, Logger::FOUND_TIME_SLOTS);
     return true;
   }
   return false;
