@@ -1,14 +1,11 @@
 #include <iostream>
-#include <fstream>
 #include <list>
 #include <sstream>
 #include <thread>
 #include <libical/ical.h>
 #include <libical/icalss.h>
-#include <unistd.h>
 #include <mutex>
 
-#include "Agent.h"
 #include "TimeSlotFinder.h"
 #include "CompareTimeSets.h"
 #include "networking.h"
