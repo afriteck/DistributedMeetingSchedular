@@ -401,7 +401,6 @@ void doWork(int descriptor, icalset* set) {
 void saveMeeting(Meeting *meeting, icalset *set)
 {
   // Open a second set because the original icalset is read-only.
-  icalerrorenum error;
   icalset *readWriteSet = icalfileset_new(icalfileset_path(set));
   if (readWriteSet == NULL) {
     cout << "saveMeeting: Failed to open icalfileset" << endl;
