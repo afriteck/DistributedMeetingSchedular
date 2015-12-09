@@ -4,8 +4,9 @@
 #include <thread>
 #include <libical/ical.h>
 #include <libical/icalss.h>
-#include <mutex>
 #include <unistd.h>
+#include <mutex>
+#include <signal.h>     /* signal, raise, sig_atomic_t */
 
 #include "TimeSlotFinder.h"
 #include "CompareTimeSets.h"
@@ -32,13 +33,31 @@ void sendAllInvitations(list<Person *> *people, Meeting *m, icalset *set);
 void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v);
 bool findOpenTimeSlots(Meeting *m, icalset *set);
 void saveMeeting(Meeting *meeting, icalset *set);
-string getTimestamp();
 
+int listenSocket = -1;
+void my_handler(int s){
+           printf("Caught signal %d\n",s);
+           if(listenSocket != -1){
+           		close(listenSocket);
+           }
+           exit(0);
+
+}
+
+string getTimestamp();
 Logger *logger;
 
 int main(int argc, char *argv[]) {
-  string filename = "log/" + getTimestamp() + ".log";
-  logger = new Logger(filename);
+   string filename = "log/" + getTimestamp() + ".log";
+   logger = new Logger(filename);
+   struct sigaction sigIntHandler;
+
+   sigIntHandler.sa_handler = my_handler;
+   sigemptyset(&sigIntHandler.sa_mask);
+   sigIntHandler.sa_flags = 0;
+
+   sigaction(SIGINT, &sigIntHandler, NULL);
+
 
   if (argc < 3) {
     cout << "usage: ./agent [path-to-ics-file] [port-number]";
@@ -56,7 +75,8 @@ int main(int argc, char *argv[]) {
 
   while (displayMainMenu() != 2) {
     Meeting *meeting = askHostForMeetingInfo();
-    list<Person *> *people = promptForInvitees();
+	list<Person *> *people;
+    people = promptForInvitees();
 
     if (findOpenTimeSlots(meeting, fileset)) {
       sendAllInvitations(people, meeting, fileset);
@@ -161,7 +181,8 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
         }
         sendMessage(msg, person->descriptor);
       }
-    } else {
+  }
+   else {
       for(list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
         Person *person = *it;
         string msg = MEETING_SCHEDULED;
@@ -169,6 +190,10 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
         sendMessage(msg, person->descriptor);
       }
       saveMeeting(meeting, set);
+      for(list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
+        Person *person = *it;
+        close(person->descriptor);
+      }
       break;
     }
   }
@@ -193,6 +218,10 @@ void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *
 bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
+  if(meeting->possible_times.empty()){
+    cout << "no possible times are available"<<endl<<endl;
+    return false;
+  }
 
   /* Check if the deadline for the meeting is backwards or doesn't exist */
   int deadlineCheck = icaltime_compare(*meeting->deadline, icaltime_today());
@@ -316,7 +345,7 @@ int displayMainMenu() {
 }
 
 void listen(int port, icalset* PATH) {
-    int listenSocket = -1, acceptSocket = -1;
+	int acceptSocket = -1;
     setupListenSocket(port, &listenSocket);
 
     NETWORKING_LOG("Accepting connections on port " << port);
