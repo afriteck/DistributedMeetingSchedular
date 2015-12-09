@@ -6,7 +6,9 @@
 #include <libical/icalss.h>
 #include <unistd.h>
 #include <mutex>
+#include <sys/stat.h>
 #include <signal.h>     /* signal, raise, sig_atomic_t */
+#include <fcntl.h>
 
 #include "TimeSlotFinder.h"
 #include "CompareTimeSets.h"
@@ -33,6 +35,8 @@ void sendAllInvitations(list<Person *> *people, Meeting *m, icalset *set);
 void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v);
 bool findOpenTimeSlots(Meeting *m, icalset *set);
 void saveMeeting(Meeting *meeting, icalset *set);
+void saveMeetingForPresentation(Meeting *meeting, icalset *set);
+string getTimestamp();
 
 int listenSocket = -1;
 void my_handler(int s){
@@ -436,6 +440,36 @@ void saveMeeting(Meeting *meeting, icalset *set)
     cout << "Failed to save meeting! " << icalerror_strerror(icalerrno) << endl;
     perror("file error");
   }
+
+  saveMeetingForPresentation(meeting, readWriteSet);
   icalfileset_free(readWriteSet);
+}
+
+void saveMeetingForPresentation(Meeting *meeting, icalset *set)
+{
+  string extension = ".ics";
+  string originalPath(icalfileset_path(set));
+  string presentationPath = originalPath.erase(originalPath.length() - extension.length(), extension.length()) + "-presentation" + extension;
+
+  icalfileset_options options = { O_RDWR | O_CREAT | O_TRUNC, 0644, 0, NULL };
+  icalset *presentationSet = icalset_new(ICAL_FILE_SET, presentationPath.c_str(), &options);
+  if (presentationSet == NULL) {
+    cout << "saveMeetingForPresentation: Failed to open icalfileset" << endl;
+    return;
+  }
+
+  icalcomponent *component = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
+  icalcomponent *c;
+  for (c = icalset_get_first_component(set); c != 0; c = icalset_get_next_component(set)) {
+    icalcomponent_add_component(component, icalcomponent_new_clone(c));
+  }
+
+  if (icalfileset_add_component(presentationSet, component) == ICAL_NO_ERROR &&
+      icalfileset_commit(presentationSet) == ICAL_NO_ERROR) {
+  } else {
+    cout << "Failed to save meeting! " << icalerror_strerror(icalerrno) << endl;
+    perror("file error presentation set");
+  }
+  icalfileset_free(presentationSet);
 }
 
