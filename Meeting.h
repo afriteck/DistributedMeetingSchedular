@@ -28,6 +28,7 @@ public:
   string possible_times_as_string() const;
   string topic_as_string_no_asterisks(string&);
   string topic_as_string_asterisks() const;
+  string meeting_as_log_string();
   icalcomponent * to_icalcomponent();
   friend ostream& operator<<(ostream& out, const Meeting& obj);
   friend istream& operator>>(istream& in, Meeting& obj);

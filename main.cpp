@@ -1,18 +1,17 @@
 #include <iostream>
-#include <fstream>
 #include <list>
 #include <sstream>
 #include <thread>
 #include <libical/ical.h>
 #include <libical/icalss.h>
-#include <unistd.h>
 #include <mutex>
+#include <unistd.h>
 
-#include "Agent.h"
 #include "TimeSlotFinder.h"
 #include "CompareTimeSets.h"
 #include "networking.h"
 #include "Meeting.h"
+#include "Logger.h"
 using namespace std;
 
 mutex invitationResponse;
@@ -33,8 +32,14 @@ void sendAllInvitations(list<Person *> *people, Meeting *m, icalset *set);
 void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v);
 bool findOpenTimeSlots(Meeting *m, icalset *set);
 void saveMeeting(Meeting *meeting, icalset *set);
+string getTimestamp();
+
+Logger *logger;
 
 int main(int argc, char *argv[]) {
+  string filename = "log/" + getTimestamp() + ".log";
+  logger = new Logger(filename);
+
   if (argc < 3) {
     cout << "usage: ./agent [path-to-ics-file] [port-number]";
     return -1;
@@ -58,10 +63,19 @@ int main(int argc, char *argv[]) {
     } else {
       continue;
     }
-
-    cout << endl << "Free times with deadline:" << icaltime_as_ical_string(*meeting->deadline) << endl;
   }
   return 0;
+}
+
+string getTimestamp()
+{
+    time_t rawtime;
+    time(&rawtime);
+    struct tm * dt;
+    char buffer [30];
+    dt = localtime(&rawtime);
+    strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", dt);
+    return std::string(buffer);
 }
 
 void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) {
@@ -91,11 +105,14 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
     c.findIntersection(free_times, &(*meeting_it)->possible_times, free_times);
   }
 
+  logger->log(meeting, NULL, Logger::INTERSECTION_ALL_REPLIES, free_times);
+
   // Check host calendar to see if intersecting time slot is still available
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
   c.findIntersection(free_times, &meeting->possible_times, free_times);
 
+  logger->log(meeting, NULL, Logger::INTERSECTION_ALL_REPLIES_AND_HOST, free_times);
 
   while(1) {
 
@@ -110,13 +127,18 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
     for (list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
       meeting->option = free_times->empty() ? Meeting::REJECT : Meeting::AWARD;
       Person *person = *it;
+      logger->log(meeting, person, Logger::SENT_AWARD);
       sendMeeting(*meeting, person->descriptor);
 
       string *messageBackFromAttendee = new string;
       receiveMessage(*messageBackFromAttendee, person->descriptor);
 
+      stringstream ss;
+      ss << "Received a " << *messageBackFromAttendee << " reply to the proposal from " << *person << " for " << meeting->meeting_as_log_string() << endl;
+      logger->log(ss.str());
+
       if(messageBackFromAttendee->compare(FREE) == 0) {
-        cout << endl << "We can hold a meeting" << endl << endl;
+        // cout << endl << "We can hold a meeting" << endl << endl;
       }
 
       else if(messageBackFromAttendee->compare(NOT_FREE) == 0) {
@@ -134,12 +156,16 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
 
       for (list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
         Person *person = *it;
+        if (msg == MEETING_NOT_SCHEDULED) {
+          logger->log(meeting, person, Logger::MTG_ABANDONED);
+        }
         sendMessage(msg, person->descriptor);
       }
     } else {
       for(list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
         Person *person = *it;
         string msg = MEETING_SCHEDULED;
+        logger->log(meeting, person, Logger::MTG_CONFIRMED);
         sendMessage(msg, person->descriptor);
       }
       saveMeeting(meeting, set);
@@ -149,7 +175,7 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
 }
 
 void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v) {
-  cout << "* Sending invitation to " << *person << "...";
+  logger->log(meeting, person, Logger::SEND_INVITATION);
 
   int descriptor = -1;
   connectToServer(const_cast<char*>(person->IP_ADDRESS.c_str()), person->PORT_NUMBER, &descriptor);
@@ -158,21 +184,15 @@ void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *
 
   Meeting *responseFromAttendee = new Meeting();
   receiveMeeting(*responseFromAttendee, descriptor);
+  logger->log(meeting, person, Logger::RECEIVED_INVITATION_REPLY);
   invitationResponse.lock();
   v->push_back(responseFromAttendee);
   invitationResponse.unlock();
 }
 
 bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
-
-  /* Write results to a file */
-  ofstream outfile;
-  outfile.open("possibleHostTimes.txt");
-
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
-
-  outfile << "Suggested times for meeting with deadline: " << icaltime_as_ical_string(*meeting->deadline) << endl << endl;
 
   /* Check if the deadline for the meeting is backwards or doesn't exist */
   int deadlineCheck = icaltime_compare(*meeting->deadline, icaltime_today());
@@ -182,31 +202,13 @@ bool findOpenTimeSlots(Meeting *meeting, icalset *set) {
       meeting->deadline->hour < 0 || meeting->deadline->hour > 23 ||
       meeting->deadline->minute < 0 || meeting->deadline->minute > 59 ||
       meeting->deadline->second < 0 || meeting->deadline->second > 59) {
-    cout << "Can't schedule meeting because of an invalid date" << endl;
-  }
-
-  else if (deadlineCheck == -1) {
-    cout << "This meeting cannot be scheduled due to invalid date!" << endl;
-  }
-
-  else if (deadlineCheck == 0) {
-    cout << "Schdeuling same day doesn't guarantee other invitees to make the meeting, therefore it can't be scheduled" << endl;
-  }
-
-  else {
-
-    cout << endl << "My possible free time has been written to a file ..." << endl << endl;
-    outfile << "Possible Suggested times by the host: " << endl << endl;
-
-    for (unordered_set<icalperiodtype *>::iterator it = meeting->possible_times.begin();
-        it != meeting->possible_times.end();
-        ++it) {
-    	outfile << icalperiodtype_as_ical_string(**it) << endl;
-    }
-
-    /* Close file after writing to file */
-    outfile.close();
-
+    cout << "Can't schedule meeting because an invalid date was entered." << endl;
+  } else if (deadlineCheck == -1) {
+    cout << "Can't schedule meeting because the deadline is in the past." << endl;
+  } else if (deadlineCheck == 0) {
+    cout << "Can't schedule meeting because the deadline is not far enough into the future." << endl;
+  } else {
+    logger->log(meeting, NULL, Logger::FOUND_TIME_SLOTS);
     return true;
   }
   return false;
@@ -330,12 +332,9 @@ void listen(int port, icalset* PATH) {
 }
 
 void doWork(int descriptor, icalset* set) {
-  /* Open a file in a write mode */
-  ofstream outfile;
-  outfile.open("hostAndAttendeeFreeTimes.txt");
-
   Meeting *meeting = new Meeting();
   receiveMeeting(*meeting, descriptor);
+  logger->log(meeting, NULL, Logger::RECEIVED_INVITATION);
 
   if (meeting->option == Meeting::INVITATION) {
     // Find free times for invitee that are before the deadline
@@ -346,20 +345,7 @@ void doWork(int descriptor, icalset* set) {
     // Send those times back
     meeting->option = Meeting::POSSIBLE_TIMES;
     meeting->possible_times = free_times;
-
-    unordered_set<icalperiodtype *>::iterator it;
-    string freeTimes;
-
-    cout << endl << "Writing free time between the host and attendee to file ...." << endl;
-    outfile << "Free times between host and attendee: " << endl << endl;
-
-    for (it = free_times.begin(); it != free_times.end(); ++it) {
-      string freeTime = icalperiodtype_as_ical_string(**it);
-
-      outfile << freeTime << endl;
-      freeTimes += freeTime;
-    }
-
+    logger->log(meeting, NULL, Logger::SEND_INVITATION_REPLY);
     sendMeeting(*meeting, descriptor);
   }
 
@@ -368,7 +354,7 @@ void doWork(int descriptor, icalset* set) {
     Meeting *meeting2 = new Meeting();
     receiveMeeting(*meeting2, descriptor);
     string result = meeting2->option == Meeting::AWARD ? "Award" : "Rejection";
-    //cout << "Meeting " << result << " received" << flush;
+    logger->log(meeting2, NULL, Logger::RECEIVED_AWARD);
 
     CompareTimeSets handler;
     unordered_set<icalperiodtype *> free_times_final;
@@ -376,6 +362,10 @@ void doWork(int descriptor, icalset* set) {
 
     bool isFree = meeting2->option == Meeting::AWARD && !(free_times_final.empty());
     string msg = isFree ? FREE : NOT_FREE;
+
+    stringstream ss;
+    ss << "Sending a " + msg + " reply to the proposal for " << meeting->meeting_as_log_string() << endl;
+    logger->log(ss.str());
     sendMessage(msg, descriptor);
 
     /* Check what we received back from the host */
@@ -388,35 +378,31 @@ void doWork(int descriptor, icalset* set) {
     }
 
     else if (messageReceivedFromHost->compare(MEETING_NOT_SCHEDULED) == 0) {
+      logger->log(meeting, NULL, Logger::RECEIVED_MTG_ABANDONED);
       break;
     }
 
     else if (messageReceivedFromHost->compare(MEETING_SCHEDULED) == 0) {
+      logger->log(meeting, NULL, Logger::RECEIVED_MTG_CONFIRMED);
       saveMeeting(meeting2, set);
       break;
     }
   }
-
-  /* close file when done writing to file */
-  outfile.close();
   close(descriptor);
 }
 
 void saveMeeting(Meeting *meeting, icalset *set)
 {
   // Open a second set because the original icalset is read-only.
-  icalerrorenum error;
   icalset *readWriteSet = icalfileset_new(icalfileset_path(set));
   if (readWriteSet == NULL) {
     cout << "saveMeeting: Failed to open icalfileset" << endl;
     return;
   }
 
-  // TODO: stop printing to stdout
   icalcomponent *component = meeting->to_icalcomponent();
   if (icalfileset_add_component(readWriteSet, component) == ICAL_NO_ERROR &&
       icalfileset_commit(readWriteSet) == ICAL_NO_ERROR) {
-    cout << "Successfully saved meeting!" << endl;
   } else {
     cout << "Failed to save meeting! " << icalerror_strerror(icalerrno) << endl;
     perror("file error");
