@@ -19,7 +19,9 @@ public:
     SENT_AWARD,
     RECEIVED_AWARD,
     MTG_CONFIRMED,
-    MTG_ABANDONED
+    MTG_ABANDONED,
+    RECEIVED_MTG_CONFIRMED,
+    RECEIVED_MTG_ABANDONED
   };
   Logger(string filename);
   void log(Meeting *meeting, Person *person, MessageType type, unordered_set<icalperiodtype *>* freeTimes = 0);
@@ -40,4 +42,6 @@ private:
   string receivedAwardMessage(Meeting *meeting, Person *person);
   string meetingConfirmedMessage(Meeting *meeting, Person *person);
   string meetingAbandonedMessage(Meeting *meeting, Person *person);
+  string receivedMeetingConfirmedMessage(Meeting *meeting);
+  string receivedMeetingAbandonedMessage(Meeting *meeting);
 };

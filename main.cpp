@@ -381,10 +381,12 @@ void doWork(int descriptor, icalset* set) {
     }
 
     else if (messageReceivedFromHost->compare(MEETING_NOT_SCHEDULED) == 0) {
+      logger->log(meeting, NULL, Logger::RECEIVED_MTG_ABANDONED);
       break;
     }
 
     else if (messageReceivedFromHost->compare(MEETING_SCHEDULED) == 0) {
+      logger->log(meeting, NULL, Logger::RECEIVED_MTG_CONFIRMED);
       saveMeeting(meeting2, set);
       break;
     }

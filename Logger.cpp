@@ -47,6 +47,13 @@ void Logger::log(Meeting *meeting, Person *person, MessageType type, unordered_s
     case MTG_ABANDONED:
       msg = meetingAbandonedMessage(meeting, person);
       break;
+    case RECEIVED_MTG_CONFIRMED:
+      msg = receivedMeetingConfirmedMessage(meeting);
+      break;
+    case RECEIVED_MTG_ABANDONED:
+      msg = receivedMeetingAbandonedMessage(meeting);
+      break;
+
   }
 
   log(msg);
@@ -182,7 +189,7 @@ string Logger::receivedAwardMessage(Meeting *meeting, Person *person)
 string Logger::meetingConfirmedMessage(Meeting *meeting, Person *person)
 {
   stringstream ss;
-  ss << "Meeting " << meeting->meeting_as_log_string() << " CONFIRMED with  " << *person << endl;
+  ss << "Sent Meeting CONFIRMED message to " << *person << " for " << meeting->meeting_as_log_string() << endl;
   ss << "====SCHEDULED FOR ====" << endl;
   ss << periodtype_set_to_string(meeting->possible_times);
   ss << "===================================" << endl;
@@ -192,7 +199,27 @@ string Logger::meetingConfirmedMessage(Meeting *meeting, Person *person)
 string Logger::meetingAbandonedMessage(Meeting *meeting, Person *person)
 {
   stringstream ss;
-  ss << "Meeting " << meeting->meeting_as_log_string() << " ABANDONED with  " << *person << endl;
+  ss << "Sent Meeting ABANDONED message to " << *person << " for " << meeting->meeting_as_log_string() << endl;
+  ss << "====NO LONGER SCHEDULED FOR ====" << endl;
+  ss << periodtype_set_to_string(meeting->possible_times);
+  ss << "===================================" << endl;
+  return ss.str();
+}
+
+string Logger::receivedMeetingAbandonedMessage(Meeting *meeting)
+{
+  stringstream ss;
+  ss << "Received Meeting ABANDONED message for " << meeting->meeting_as_log_string() << endl;
+  ss << "====NO LONGER SCHEDULED FOR ====" << endl;
+  ss << periodtype_set_to_string(meeting->possible_times);
+  ss << "===================================" << endl;
+  return ss.str();
+}
+
+string Logger::receivedMeetingConfirmedMessage(Meeting *meeting)
+{
+  stringstream ss;
+  ss << "Received Meeting CONFIRMED message for " << meeting->meeting_as_log_string() << endl;
   ss << "====SCHEDULED FOR ====" << endl;
   ss << periodtype_set_to_string(meeting->possible_times);
   ss << "===================================" << endl;
