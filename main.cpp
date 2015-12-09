@@ -16,7 +16,6 @@
 using namespace std;
 
 mutex invitationResponse;
-static volatile sig_atomic_t stop;
 
 const string MEETING_SCHEDULED = "MEETING_SCHEDULED";
 const string MEETING_NOT_SCHEDULED = "MEETING_NOT_SCHEDULED";
@@ -35,9 +34,7 @@ void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *
 bool findOpenTimeSlots(Meeting *m, icalset *set);
 void saveMeeting(Meeting *meeting, icalset *set);
 
-int check_signal =0;
-list<Person *> *people;
-int listenSocket = -1, acceptSocket = -1;
+int listenSocket = -1;
 void my_handler(int s){
            printf("Caught signal %d\n",s);
            if(listenSocket != -1){
@@ -78,6 +75,7 @@ int main(int argc, char *argv[]) {
 
   while (displayMainMenu() != 2) {
     Meeting *meeting = askHostForMeetingInfo();
+	list<Person *> *people;
     people = promptForInvitees();
 
     if (findOpenTimeSlots(meeting, fileset)) {
@@ -347,11 +345,12 @@ int displayMainMenu() {
 }
 
 void listen(int port, icalset* PATH) {
+	int acceptSocket = -1;
     setupListenSocket(port, &listenSocket);
 
     NETWORKING_LOG("Accepting connections on port " << port);
 
-    while (stop) {
+    while (1) {
       NETWORKING_LOG("Ready to accept an incoming connection!");
       acceptIncomingConnection(&listenSocket, &acceptSocket);
       NETWORKING_LOG("Connection accepted!");
