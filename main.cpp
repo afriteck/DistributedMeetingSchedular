@@ -135,7 +135,7 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
       receiveMessage(*messageBackFromAttendee, person->descriptor);
 
       stringstream ss;
-      ss << "Received a " << *messageBackFromAttendee << " reply to the proposal from " << *person << " for " << meeting->meeting_as_log_string();
+      ss << "Received a " << *messageBackFromAttendee << " reply to the proposal from " << *person << " for " << meeting->meeting_as_log_string() << endl;
       logger->log(ss.str());
 
       if(messageBackFromAttendee->compare(FREE) == 0) {
@@ -157,12 +157,16 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
 
       for (list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
         Person *person = *it;
+        if (msg == MEETING_NOT_SCHEDULED) {
+          logger->log(meeting, person, Logger::MTG_ABANDONED);
+        }
         sendMessage(msg, person->descriptor);
       }
     } else {
       for(list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
         Person *person = *it;
         string msg = MEETING_SCHEDULED;
+        logger->log(meeting, person, Logger::MTG_CONFIRMED);
         sendMessage(msg, person->descriptor);
       }
       saveMeeting(meeting, set);
@@ -363,7 +367,7 @@ void doWork(int descriptor, icalset* set) {
     string msg = isFree ? FREE : NOT_FREE;
 
     stringstream ss;
-    ss << "Sending a " + msg + " reply to the proposal for " << meeting->meeting_as_log_string();
+    ss << "Sending a " + msg + " reply to the proposal for " << meeting->meeting_as_log_string() << endl;
     logger->log(ss.str());
     sendMessage(msg, descriptor);
 

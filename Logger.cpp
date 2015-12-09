@@ -41,6 +41,12 @@ void Logger::log(Meeting *meeting, Person *person, MessageType type, unordered_s
     case RECEIVED_AWARD:
       msg = receivedAwardMessage(meeting, person);
       break;
+    case MTG_CONFIRMED:
+      msg = meetingConfirmedMessage(meeting, person);
+      break;
+    case MTG_ABANDONED:
+      msg = meetingAbandonedMessage(meeting, person);
+      break;
   }
 
   log(msg);
@@ -170,5 +176,25 @@ string Logger::receivedAwardMessage(Meeting *meeting, Person *person)
     ss << periodtype_set_to_string(meeting->possible_times);
     ss << "===================================" << endl;
   }
+  return ss.str();
+}
+
+string Logger::meetingConfirmedMessage(Meeting *meeting, Person *person)
+{
+  stringstream ss;
+  ss << "Meeting " << meeting->meeting_as_log_string() << " CONFIRMED with  " << *person << endl;
+  ss << "====SCHEDULED FOR ====" << endl;
+  ss << periodtype_set_to_string(meeting->possible_times);
+  ss << "===================================" << endl;
+  return ss.str();
+}
+
+string Logger::meetingAbandonedMessage(Meeting *meeting, Person *person)
+{
+  stringstream ss;
+  ss << "Meeting " << meeting->meeting_as_log_string() << " ABANDONED with  " << *person << endl;
+  ss << "====SCHEDULED FOR ====" << endl;
+  ss << periodtype_set_to_string(meeting->possible_times);
+  ss << "===================================" << endl;
   return ss.str();
 }

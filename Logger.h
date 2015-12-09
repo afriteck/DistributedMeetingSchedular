@@ -17,7 +17,9 @@ public:
     INTERSECTION_ALL_REPLIES,
     INTERSECTION_ALL_REPLIES_AND_HOST,
     SENT_AWARD,
-    RECEIVED_AWARD
+    RECEIVED_AWARD,
+    MTG_CONFIRMED,
+    MTG_ABANDONED
   };
   Logger(string filename);
   void log(Meeting *meeting, Person *person, MessageType type, unordered_set<icalperiodtype *>* freeTimes = 0);
@@ -36,4 +38,6 @@ private:
   string periodtype_set_to_string(unordered_set<icalperiodtype *> set);
   string sentAwardMessage(Meeting *meeting, Person *person);
   string receivedAwardMessage(Meeting *meeting, Person *person);
+  string meetingConfirmedMessage(Meeting *meeting, Person *person);
+  string meetingAbandonedMessage(Meeting *meeting, Person *person);
 };
