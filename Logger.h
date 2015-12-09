@@ -1,4 +1,6 @@
 #include <string>
+#include <unordered_set>
+#include <libical/ical.h>
 using namespace std;
 
 class Meeting;
@@ -11,10 +13,12 @@ public:
     SEND_INVITATION,
     RECEIVED_INVITATION,
     SEND_INVITATION_REPLY,
-    RECEIVED_INVITATION_REPLY
+    RECEIVED_INVITATION_REPLY,
+    INTERSECTION_ALL_REPLIES,
+    INTERSECTION_ALL_REPLIES_AND_HOST
   };
   Logger(string filename);
-  void log(Meeting *meeting, Person *person, MessageType type);
+  void log(Meeting *meeting, Person *person, MessageType type, unordered_set<icalperiodtype *>* freeTimes = 0);
 
 private:
   string filename;
@@ -23,5 +27,8 @@ private:
   string receivedInvitationMessage(Meeting *meeting);
   string sendInvitationReplyMessage(Meeting *meeting);
   string receivedInvitationReplyMessage(Meeting *meeting, Person *person);
+  string intersectionMessage(Meeting *meeting, unordered_set<icalperiodtype *>* freeTimes);
+  string intersectionHostMessage(Meeting *meeting, unordered_set<icalperiodtype *>* freeTimes);
   void writeToFile(string msg);
+  string periodtype_set_to_string(unordered_set<icalperiodtype *> set);
 };

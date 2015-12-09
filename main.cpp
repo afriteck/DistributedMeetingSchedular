@@ -109,11 +109,14 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
     c.findIntersection(free_times, &(*meeting_it)->possible_times, free_times);
   }
 
+  logger->log(meeting, NULL, Logger::INTERSECTION_ALL_REPLIES, free_times);
+
   // Check host calendar to see if intersecting time slot is still available
   TimeSlotFinder finder;
   finder.findAvailabilityForMeeting(meeting, set);
   c.findIntersection(free_times, &meeting->possible_times, free_times);
 
+  logger->log(meeting, NULL, Logger::INTERSECTION_ALL_REPLIES_AND_HOST, free_times);
 
   while(1) {
 

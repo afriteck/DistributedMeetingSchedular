@@ -10,7 +10,7 @@ mutex logMutex;
 
 Logger::Logger(string f) : filename(f) { }
 
-void Logger::log(Meeting *meeting, Person *person, MessageType type)
+void Logger::log(Meeting *meeting, Person *person, MessageType type, unordered_set<icalperiodtype *> *freeTimes)
 {
   string msg;
   switch (type) {
@@ -29,6 +29,12 @@ void Logger::log(Meeting *meeting, Person *person, MessageType type)
     case RECEIVED_INVITATION_REPLY:
       msg = receivedInvitationReplyMessage(meeting, person);
       break;
+    case INTERSECTION_ALL_REPLIES:
+      msg = intersectionMessage(meeting, freeTimes);
+      break;
+    case INTERSECTION_ALL_REPLIES_AND_HOST:
+      msg = intersectionHostMessage(meeting, freeTimes);
+      break;
   }
 
   logMutex.lock();
@@ -45,7 +51,7 @@ void Logger::writeToFile(string msg)
   // Don't call close() explicitly; stream is closed when it goes out of scope
 }
 
-string periodtype_set_to_string(unordered_set<icalperiodtype *> set)
+string Logger::periodtype_set_to_string(unordered_set<icalperiodtype *> set)
 {
   stringstream ss;
   unordered_set<icalperiodtype *>::iterator it;
@@ -108,5 +114,25 @@ string Logger::receivedInvitationReplyMessage(Meeting *meeting, Person *person)
   ss << "====SLOTS WHERE INVITEE WAS AVAILABLE====" << endl;
   ss << periodtype_set_to_string(meeting->possible_times);
   ss << "=========================================" << endl;
+  return ss.str();
+}
+
+string Logger::intersectionMessage(Meeting *meeting, unordered_set<icalperiodtype *>* freeTimes)
+{
+  stringstream ss;
+  ss << "Found intersection of all replies for " << meeting->meeting_as_log_string() << endl;
+  ss << "====INTERSECTION OF ALL REPLIES====" << endl;
+  ss << periodtype_set_to_string(*freeTimes);
+  ss << "===================================" << endl;
+  return ss.str();
+}
+
+string Logger::intersectionHostMessage(Meeting *meeting, unordered_set<icalperiodtype *>* freeTimes)
+{
+  stringstream ss;
+  ss << "Found intersection of host calendar and all replies for " << meeting->meeting_as_log_string() << endl;
+  ss << "====INTERSECTION OF ALL REPLIES WITH HOST====" << endl;
+  ss << periodtype_set_to_string(*freeTimes);
+  ss << "===================================" << endl;
   return ss.str();
 }
