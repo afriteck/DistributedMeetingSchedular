@@ -138,7 +138,7 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
       logger->log(ss.str());
 
       if(messageBackFromAttendee->compare(FREE) == 0) {
-        cout << endl << "We can hold a meeting" << endl << endl;
+        // cout << endl << "We can hold a meeting" << endl << endl;
       }
 
       else if(messageBackFromAttendee->compare(NOT_FREE) == 0) {
