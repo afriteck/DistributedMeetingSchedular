@@ -334,10 +334,6 @@ void listen(int port, icalset* PATH) {
 }
 
 void doWork(int descriptor, icalset* set) {
-  /* Open a file in a write mode */
-  ofstream outfile;
-  outfile.open("log/hostAndAttendeeFreeTimes.log");
-
   Meeting *meeting = new Meeting();
   receiveMeeting(*meeting, descriptor);
   logger->log(meeting, NULL, Logger::RECEIVED_INVITATION);
@@ -392,9 +388,6 @@ void doWork(int descriptor, icalset* set) {
       break;
     }
   }
-
-  /* close file when done writing to file */
-  outfile.close();
   close(descriptor);
 }
 
