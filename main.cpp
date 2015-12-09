@@ -342,20 +342,7 @@ void doWork(int descriptor, icalset* set) {
     // Send those times back
     meeting->option = Meeting::POSSIBLE_TIMES;
     meeting->possible_times = free_times;
-
-    unordered_set<icalperiodtype *>::iterator it;
-    string freeTimes;
-
-    cout << endl << "Writing free time between the host and attendee to file ...." << endl;
-    outfile << "Free times between host and attendee: " << endl << endl;
-
-    for (it = free_times.begin(); it != free_times.end(); ++it) {
-      string freeTime = icalperiodtype_as_ical_string(**it);
-
-      outfile << freeTime << endl;
-      freeTimes += freeTime;
-    }
-
+    logger->log(meeting, NULL, Logger::SEND_INVITATION_REPLY);
     sendMeeting(*meeting, descriptor);
   }
 
