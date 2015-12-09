@@ -178,6 +178,7 @@ void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *
 
   Meeting *responseFromAttendee = new Meeting();
   receiveMeeting(*responseFromAttendee, descriptor);
+  logger->log(meeting, person, Logger::RECEIVED_INVITATION_REPLY);
   invitationResponse.lock();
   v->push_back(responseFromAttendee);
   invitationResponse.unlock();

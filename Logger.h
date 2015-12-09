@@ -10,7 +10,8 @@ public:
     FOUND_TIME_SLOTS,
     SEND_INVITATION,
     RECEIVED_INVITATION,
-    SEND_INVITATION_REPLY
+    SEND_INVITATION_REPLY,
+    RECEIVED_INVITATION_REPLY
   };
   Logger(string filename);
   void log(Meeting *meeting, Person *person, MessageType type);
@@ -21,5 +22,6 @@ private:
   string sendInvitationMessage(Meeting *meeting, Person *person);
   string receivedInvitationMessage(Meeting *meeting);
   string sendInvitationReplyMessage(Meeting *meeting);
+  string receivedInvitationReplyMessage(Meeting *meeting, Person *person);
   void writeToFile(string msg);
 };

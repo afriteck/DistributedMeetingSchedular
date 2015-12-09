@@ -26,6 +26,9 @@ void Logger::log(Meeting *meeting, Person *person, MessageType type)
     case SEND_INVITATION_REPLY:
       msg = sendInvitationReplyMessage(meeting);
       break;
+    case RECEIVED_INVITATION_REPLY:
+      msg = receivedInvitationReplyMessage(meeting, person);
+      break;
   }
 
   logMutex.lock();
@@ -90,6 +93,17 @@ string Logger::sendInvitationReplyMessage(Meeting *meeting)
 {
   stringstream ss;
   ss << "Replied to invitation for " << meeting->meeting_as_log_string() << endl;
+
+  ss << "====SLOTS WHERE INVITEE WAS AVAILABLE====" << endl;
+  ss << periodtype_set_to_string(meeting->possible_times);
+  ss << "=========================================" << endl;
+  return ss.str();
+}
+
+string Logger::receivedInvitationReplyMessage(Meeting *meeting, Person *person)
+{
+  stringstream ss;
+  ss << "Received invitation reply from " << *person << " for " << meeting->meeting_as_log_string() << endl;
 
   ss << "====SLOTS WHERE INVITEE WAS AVAILABLE====" << endl;
   ss << periodtype_set_to_string(meeting->possible_times);
