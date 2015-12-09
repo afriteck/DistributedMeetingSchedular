@@ -331,6 +331,7 @@ void doWork(int descriptor, icalset* set) {
 
   Meeting *meeting = new Meeting();
   receiveMeeting(*meeting, descriptor);
+  logger->log(meeting, NULL, Logger::RECEIVED_INVITATION);
 
   if (meeting->option == Meeting::INVITATION) {
     // Find free times for invitee that are before the deadline
