@@ -5,6 +5,7 @@
 #include <libical/ical.h>
 #include <libical/icalss.h>
 #include <mutex>
+#include <unistd.h>
 
 #include "TimeSlotFinder.h"
 #include "CompareTimeSets.h"

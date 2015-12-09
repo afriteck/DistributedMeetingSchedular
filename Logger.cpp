@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <mutex>
 using namespace std;
 
 mutex logMutex;
