@@ -62,8 +62,6 @@ int main(int argc, char *argv[]) {
     } else {
       continue;
     }
-
-    cout << endl << "Free times with deadline:" << icaltime_as_ical_string(*meeting->deadline) << endl;
   }
   return 0;
 }
@@ -176,8 +174,6 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
 }
 
 void invitePersonToMeeting(Person *person, Meeting *meeting, vector<Meeting *> *v) {
-  cout << "* Sending invitation to " << *person << "...";
-
   logger->log(meeting, person, Logger::SEND_INVITATION);
 
   int descriptor = -1;
@@ -403,11 +399,9 @@ void saveMeeting(Meeting *meeting, icalset *set)
     return;
   }
 
-  // TODO: stop printing to stdout
   icalcomponent *component = meeting->to_icalcomponent();
   if (icalfileset_add_component(readWriteSet, component) == ICAL_NO_ERROR &&
       icalfileset_commit(readWriteSet) == ICAL_NO_ERROR) {
-    cout << "Successfully saved meeting!" << endl;
   } else {
     cout << "Failed to save meeting! " << icalerror_strerror(icalerrno) << endl;
     perror("file error");
