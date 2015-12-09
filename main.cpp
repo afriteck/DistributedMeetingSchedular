@@ -131,10 +131,15 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
     for (list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
       meeting->option = free_times->empty() ? Meeting::REJECT : Meeting::AWARD;
       Person *person = *it;
+      logger->log(meeting, person, Logger::SENT_AWARD);
       sendMeeting(*meeting, person->descriptor);
 
       string *messageBackFromAttendee = new string;
       receiveMessage(*messageBackFromAttendee, person->descriptor);
+
+      stringstream ss;
+      ss << "Received a " << *messageBackFromAttendee << " reply to the proposal from " << *person << " for " << meeting->meeting_as_log_string();
+      logger->log(ss.str());
 
       if(messageBackFromAttendee->compare(FREE) == 0) {
         cout << endl << "We can hold a meeting" << endl << endl;
@@ -355,7 +360,7 @@ void doWork(int descriptor, icalset* set) {
     Meeting *meeting2 = new Meeting();
     receiveMeeting(*meeting2, descriptor);
     string result = meeting2->option == Meeting::AWARD ? "Award" : "Rejection";
-    //cout << "Meeting " << result << " received" << flush;
+    logger->log(meeting2, NULL, Logger::RECEIVED_AWARD);
 
     CompareTimeSets handler;
     unordered_set<icalperiodtype *> free_times_final;
@@ -363,6 +368,10 @@ void doWork(int descriptor, icalset* set) {
 
     bool isFree = meeting2->option == Meeting::AWARD && !(free_times_final.empty());
     string msg = isFree ? FREE : NOT_FREE;
+
+    stringstream ss;
+    ss << "Sending a " + msg + " reply to the proposal for " << meeting->meeting_as_log_string();
+    logger->log(ss.str());
     sendMessage(msg, descriptor);
 
     /* Check what we received back from the host */

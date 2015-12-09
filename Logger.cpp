@@ -35,11 +35,21 @@ void Logger::log(Meeting *meeting, Person *person, MessageType type, unordered_s
     case INTERSECTION_ALL_REPLIES_AND_HOST:
       msg = intersectionHostMessage(meeting, freeTimes);
       break;
+    case SENT_AWARD:
+      msg = sentAwardMessage(meeting, person);
+      break;
+    case RECEIVED_AWARD:
+      msg = receivedAwardMessage(meeting, person);
+      break;
   }
 
+  log(msg);
+}
+
+void Logger::log(string msg)
+{
   logMutex.lock();
   writeToFile(msg);
-  writeToFile("\n");
   logMutex.unlock();
 }
 
@@ -47,7 +57,7 @@ void Logger::writeToFile(string msg)
 {
   ofstream ofs;
   ofs.open(filename, ios_base::app | ios_base::out);
-  ofs << msg;
+  ofs << msg + "\n";
   // Don't call close() explicitly; stream is closed when it goes out of scope
 }
 
@@ -134,5 +144,31 @@ string Logger::intersectionHostMessage(Meeting *meeting, unordered_set<icalperio
   ss << "====INTERSECTION OF ALL REPLIES WITH HOST====" << endl;
   ss << periodtype_set_to_string(*freeTimes);
   ss << "===================================" << endl;
+  return ss.str();
+}
+
+string Logger::sentAwardMessage(Meeting *meeting, Person *person)
+{
+  stringstream ss;
+  string outcome = meeting->option == Meeting::AWARD ? "acceptance" : "rejection";
+  ss << "Sent " << outcome << " proposal to " << *person << " for " << meeting->meeting_as_log_string() << endl;
+  if (meeting->option == Meeting::AWARD) {
+    ss << "====PROPOSED MEETING TIME====" << endl;
+    ss << periodtype_set_to_string(meeting->possible_times);
+    ss << "===================================" << endl;
+  }
+  return ss.str();
+}
+
+string Logger::receivedAwardMessage(Meeting *meeting, Person *person)
+{
+  stringstream ss;
+  string outcome = meeting->option == Meeting::AWARD ? "acceptance" : "rejection";
+  ss << "Received " << outcome << " proposal for " << meeting->meeting_as_log_string() << endl;
+  if (meeting->option == Meeting::AWARD) {
+    ss << "====PROPOSED MEETING TIME====" << endl;
+    ss << periodtype_set_to_string(meeting->possible_times);
+    ss << "===================================" << endl;
+  }
   return ss.str();
 }
