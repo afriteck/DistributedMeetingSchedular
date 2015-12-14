@@ -13,7 +13,7 @@ else
 endif
 
 LDLIBS = -lical -licalss -licalvcal -lical_cxx -licalss_cxx
-SRCS = main.cpp Entity.cpp Agent.cpp TimeSlotFinder.cpp networking.cpp CompareTimeSets.cpp Meeting.cpp Logger.cpp
+SRCS = main.cpp Entity.cpp Agent.cpp TimeSlotFinder.cpp networking.cpp CompareTimeSets.cpp Meeting.cpp Logger.cpp Notification.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 .PHONY: clean debug depend extreme
@@ -47,10 +47,12 @@ extreme: all
 
 # DO NOT DELETE
 
-main.o: Agent.h Entity.h TimeSlotFinder.h CompareTimeSets.h networking.h Meeting.h Logger.h
+main.o: TimeSlotFinder.h Entity.h CompareTimeSets.h networking.h Meeting.h Logger.h Notification.h
 Entity.o: Entity.h
 Agent.o: Agent.h Entity.h
 TimeSlotFinder.o: TimeSlotFinder.h Entity.h Meeting.h impl/icalspanlistimpl.h
 networking.o: networking.h Meeting.h
 CompareTimeSets.o: CompareTimeSets.h TimeSlotFinder.h Entity.h Meeting.h
 Meeting.o: Entity.h Meeting.h
+Logger.o: Logger.h Meeting.h Entity.h
+Notification.o: Notification.h Meeting.h
