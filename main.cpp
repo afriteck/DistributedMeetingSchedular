@@ -15,6 +15,7 @@
 #include "networking.h"
 #include "Meeting.h"
 #include "Logger.h"
+#include "Notification.h"
 using namespace std;
 
 mutex invitationResponse;
@@ -176,6 +177,9 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
       string msg = free_times->empty() ? MEETING_NOT_SCHEDULED : STILL_WORKING;
       if (msg == STILL_WORKING) {
         free_times->erase(temp);
+      } else {
+        Notification n(meeting, false);
+        n.display();
       }
 
       for (list<Person *>::iterator it = people->begin(); it != people->end(); ++it) {
@@ -198,6 +202,8 @@ void sendAllInvitations(list<Person *> *people, Meeting *meeting, icalset *set) 
         Person *person = *it;
         close(person->descriptor);
       }
+      Notification n(meeting, true);
+      n.display();
       break;
     }
   }
@@ -411,12 +417,16 @@ void doWork(int descriptor, icalset* set) {
     }
 
     else if (messageReceivedFromHost->compare(MEETING_NOT_SCHEDULED) == 0) {
-      logger->log(meeting, NULL, Logger::RECEIVED_MTG_ABANDONED);
+      Notification n(meeting2, false);
+      n.display();
+      logger->log(meeting2, NULL, Logger::RECEIVED_MTG_ABANDONED);
       break;
     }
 
     else if (messageReceivedFromHost->compare(MEETING_SCHEDULED) == 0) {
-      logger->log(meeting, NULL, Logger::RECEIVED_MTG_CONFIRMED);
+      Notification n(meeting2, true);
+      n.display();
+      logger->log(meeting2, NULL, Logger::RECEIVED_MTG_CONFIRMED);
       saveMeeting(meeting2, set);
       break;
     }
