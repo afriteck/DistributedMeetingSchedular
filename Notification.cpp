@@ -26,5 +26,3 @@ void Notification::display() {
   system(ss.str().c_str());
   #endif
 }
-
-
