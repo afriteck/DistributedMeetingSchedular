@@ -5,11 +5,17 @@
 #include <fstream>
 #include <sstream>
 #include <mutex>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
 using namespace std;
 
 mutex logMutex;
 
-Logger::Logger(string f) : filename(f), start(time(0)) {}
+Logger::Logger(string f) : filename(f) {
+  start = chrono::high_resolution_clock::now();
+  lastTime = start;
+}
 
 void Logger::log(Meeting *meeting, Person *person, MessageType type, unordered_set<icalperiodtype *> *freeTimes)
 {
@@ -63,9 +69,11 @@ void Logger::log(Meeting *meeting, Person *person, MessageType type, unordered_s
 void Logger::log(string msg)
 {
   logMutex.lock();
-  time_t duration = (time(0) - start);
+  chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
   stringstream ss;
-  ss << duration;
+  ss << chrono::duration<double, std::milli>(end-start).count() << " ms since program start." << endl;
+  ss << chrono::duration<double, std::milli>(end-lastTime).count() << " ms since last event.";
+  lastTime = end;
   writeToFile(ss.str());
   writeToFile(msg);
   logMutex.unlock();

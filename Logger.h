@@ -2,6 +2,7 @@
 #include <unordered_set>
 #include <libical/ical.h>
 #include <ctime>
+#include <chrono>
 using namespace std;
 
 class Meeting;
@@ -29,7 +30,8 @@ public:
   void log(string msg);
 
 private:
-  time_t start;
+  chrono::high_resolution_clock::time_point start;
+  chrono::high_resolution_clock::time_point lastTime;
   string filename;
   string foundTimeSlotsMessage(Meeting *meeting);
   string sendInvitationMessage(Meeting *meeting, Person *person);
