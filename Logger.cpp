@@ -9,7 +9,7 @@ using namespace std;
 
 mutex logMutex;
 
-Logger::Logger(string f) : filename(f) { }
+Logger::Logger(string f) : filename(f), start(time(0)) {}
 
 void Logger::log(Meeting *meeting, Person *person, MessageType type, unordered_set<icalperiodtype *> *freeTimes)
 {
@@ -63,6 +63,10 @@ void Logger::log(Meeting *meeting, Person *person, MessageType type, unordered_s
 void Logger::log(string msg)
 {
   logMutex.lock();
+  time_t duration = (time(0) - start);
+  stringstream ss;
+  ss << duration;
+  writeToFile(ss.str());
   writeToFile(msg);
   logMutex.unlock();
 }

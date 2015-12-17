@@ -1,6 +1,7 @@
 #include <string>
 #include <unordered_set>
 #include <libical/ical.h>
+#include <ctime>
 using namespace std;
 
 class Meeting;
@@ -28,6 +29,7 @@ public:
   void log(string msg);
 
 private:
+  time_t start;
   string filename;
   string foundTimeSlotsMessage(Meeting *meeting);
   string sendInvitationMessage(Meeting *meeting, Person *person);
